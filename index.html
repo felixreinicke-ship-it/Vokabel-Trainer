@@ -1,0 +1,2114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vokabeltrainer V19.0 (Speichern & Manuelle Eingabe)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        
+        /* Basisstil für die Karte (Train View) */
+        #flashcard {
+            width: 100%;
+            height: 400px; 
+            perspective: 1000px;
+            position: relative;
+            cursor: pointer; 
+        }
+
+        .flashcard-inner {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s; 
+            transform-style: preserve-3d;
+            position: relative;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.75rem;
+            padding: 2.5rem;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .flashcard-front {
+            background-color: white;
+            border: 4px solid #3b82f6; 
+        }
+
+        .flashcard-back {
+            transform: rotateY(180deg);
+            background-color: #eff6ff; 
+            border: 4px solid #60a5fa; 
+            color: #1d4ed8; 
+        }
+
+        /* Liste Styling */
+        .list-header {
+            background-color: #4f46e5; /* Indigo 600 */
+            color: white;
+        }
+
+        /* Test Modul Styling */
+        .test-question-item[data-status="correct"] {
+            background-color: #d1fae5; 
+            border-left-color: #10b981; 
+        }
+        .test-question-item[data-status="incorrect"] {
+            background-color: #fee2e2; 
+            border-left-color: #ef4444; 
+        }
+        .test-question-item[data-status="skipped"] {
+            background-color: #fffbeb; 
+            border-left-color: #f59e0b; 
+        }
+        .loading-indicator {
+            border: 4px solid #f3f3f3; 
+            border-top: 4px solid #3498db; 
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Match It! Game Styling */
+        .match-card {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        .match-card-german {
+            background-color: #fee2e2; /* Red 100 */
+            color: #991b1b; /* Red 800 */
+            border: 2px solid #ef4444;
+        }
+        .match-card-english {
+            background-color: #dbeafe; /* Blue 100 */
+            color: #1e40af; /* Blue 800 */
+            border: 2px solid #3b82f6;
+        }
+        .match-card.selected {
+            transform: scale(1.05);
+            border: 3px solid #f59e0b; /* Amber */
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.5);
+        }
+        .match-card.matched {
+            background-color: #d1fae5; /* Green 100 */
+            color: #10b981; /* Green 600 */
+            border: 3px solid #10b981;
+            cursor: default;
+            pointer-events: none; /* Deaktiviert Klicks */
+            opacity: 0.5;
+        }
+        
+        /* Hangman Game Styling */
+        .hangman-word span {
+            display: inline-block;
+            width: 1.5rem;
+            height: 2rem;
+            line-height: 2rem;
+            text-align: center;
+            margin: 0 2px;
+            border-bottom: 3px solid #4f46e5;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e40af;
+        }
+        .hangman-keyboard button {
+            width: 40px;
+            height: 40px;
+            margin: 3px;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        .hangman-keyboard button:disabled {
+            background-color: #ccc;
+            color: #888;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* Quiz Time Styling */
+        .mc-option {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.75rem;
+            background-color: #fff;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .mc-option:hover {
+            border-color: #93c5fd; /* Blue 300 */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .mc-option.correct {
+            background-color: #d1fae5; /* Green 100 */
+            border-color: #10b981; /* Green 500 */
+            color: #065f46;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        .mc-option.incorrect {
+            background-color: #fee2e2; /* Red 100 */
+            border-color: #ef4444; /* Red 500 */
+            color: #991b1b;
+            font-weight: bold;
+            pointer-events: none;
+        }
+        .mc-option.selected {
+            background-color: #bfdbfe; /* Blue 200 */
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div id="app" class="max-w-xl mx-auto">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center">Vokabel-Trainer</h1>
+        
+        <div id="navigation" class="flex justify-center space-x-2 mb-8">
+            <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('home')">
+                🏠 Home
+            </button>
+            <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('train')">
+                🧠 Lernen
+            </button>
+            <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('list')">
+                📚 Liste
+            </button>
+            <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('test')">
+                📝 Test
+            </button>
+        </div>
+
+
+        <div id="home-view" class="view">
+            <div class="p-8 bg-white rounded-xl shadow-2xl text-center">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Wähle dein Lernmodul</h2>
+                <div class="space-y-4">
+                    <button class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('games')">
+                        🎮 Vokabel Spiele
+                    </button>
+                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('train')">
+                        Vokabeln lernen (Karteikarten)
+                    </button>
+                    <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('list')">
+                        Vokabelliste anzeigen (Alle)
+                    </button>
+                    <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('test')">
+                        📝 Vokabel-Test (15 Fragen)
+                    </button>
+                    <button class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('manage')">
+                        ⚙️ Vokabeln hinzufügen & verwalten
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-8 p-6 bg-white rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center border-b pb-3">📦 Dein Lernfortschritt (Kasten-Übersicht)</h2>
+                <div id="box-stats-home" class="space-y-4">
+                    </div>
+                <p class="mt-4 text-sm text-gray-500 text-center">Klicken Sie auf einen Kasten, um alle darin enthaltenen Vokabeln zu sehen.</p>
+            </div>
+        </div>
+        
+        <div id="train-view" class="view hidden">
+            <div class="max-w-xl mx-auto">
+                 <div class="p-4 bg-yellow-100 rounded-xl shadow-md mb-6 border border-yellow-300">
+                    <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">Kasten-Auswahl für das Training:</h3>
+                    <div id="box-selection-container" class="flex flex-wrap justify-center gap-3">
+                        </div>
+                </div>
+                 <div class="mb-6 text-center text-sm font-medium text-gray-600">
+                    Gelernt: <span id="currentCardIndex">0</span> von <span id="totalCards">21</span> Vokabeln
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-8">
+                    <div id="progressBar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+
+                <div class="flex justify-center space-x-2 text-center text-xs mb-4">
+                    <span id="box-stats" class="text-gray-500">Boxen-Statistik wird geladen...</span>
+                </div>
+                <div id="cardContainer" class="bg-white rounded-xl shadow-2xl mb-8 p-4">
+                    <div id="flashcard" class="flashcard w-full mb-6" onclick="handleCardClick()"> 
+                        <div class="flashcard-inner">
+                            <div id="cardFront" class="flashcard-front">
+                                <p class="text-2xl font-bold text-gray-800">Klicke auf START</p>
+                            </div>
+                            <div id="cardBack" class="flashcard-back">
+                                <p class="text-2xl font-semibold"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-gray-50 rounded-lg shadow-inner">
+                        <p id="feedback" class="text-center font-semibold mb-4 text-lg text-gray-700 h-6"></p>
+
+                        <input type="text" id="answerInput" placeholder="Deine englische Antwort..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-200" disabled>
+                        
+                        <div class="mt-4 space-y-2">
+                            <button id="checkButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="checkAnswer()" disabled>
+                                Antwort überprüfen
+                            </button>
+                            <button id="showAnswerButton" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95 hidden" onclick="handleCardClick()">
+                                🔄 Karte umdrehen / Antwort anzeigen
+                            </button>
+                            
+                        </div>
+
+                        <div id="nextActions" class="mt-6 space-y-3 hidden">
+                            <p class="text-center text-sm font-medium text-gray-600">Wähle Status und gehe zur nächsten Karte:</p>
+                            <div class="flex space-x-3">
+                                <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="processResult(true)">
+                                    ✅ Korrekt (Nächste Box)
+                                </button>
+                                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="processResult(false)">
+                                    ❌ Falsch (Box 1)
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <button id="startButton" class="w-full mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="startTrainGame()">
+                            START
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="list-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Vokabelliste (Deutsch ↔ Englisch)</h2>
+             <p id="list-filter-info" class="text-center text-sm text-gray-600 mb-4 font-semibold">Alle Vokabeln werden angezeigt.</p>
+            
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="list-header">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Deutsch (German)
+                            </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
+                                Englisch (English)
+                            </th>
+                             <th scope="col" class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
+                                Box
+                            </th>
+                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
+                                Aktion
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="vocabularyListBody" class="bg-white divide-y divide-gray-200">
+                        </tbody>
+                </table>
+            </div>
+            <p class="mt-4 text-sm text-gray-500 text-center">Gesamtzahl der Vokabeln: <span id="listTotalCount"></span></p>
+        </div>
+
+        <div id="test-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📝 Vokabel-Test (Deutsch → Englisch)</h2>
+            
+            <div id="test-container">
+                <p id="test-info" class="text-center text-gray-600 mb-6"></p>
+
+                <div id="test-questions" class="space-y-6">
+                    </div>
+
+                <div class="mt-8">
+                    <button id="submitTestButton" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95 hidden" onclick="submitTest()">
+                        Test beenden und korrigieren
+                    </button>
+                </div>
+                <div class="mt-4">
+                     <button id="startTestButton" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="startTest()">
+                        Test starten (15 Vokabeln)
+                    </button>
+                </div>
+            </div>
+
+            <div id="test-results" class="hidden mt-8 p-6 border-4 border-red-500 rounded-xl bg-red-50">
+                <h3 class="text-3xl font-extrabold text-red-700 text-center mb-4">Ergebnis des Vokabeltests</h3>
+                <div class="grid grid-cols-2 gap-4 text-center mb-6">
+                    <div class="p-4 bg-white rounded-lg shadow">
+                        <p class="text-sm text-gray-500">Korrekte Antworten</p>
+                        <p id="result-correct" class="text-2xl font-bold text-green-600">-</p>
+                    </div>
+                    <div class="p-4 bg-white rounded-lg shadow">
+                        <p class="text-sm text-gray-500">Fehler / Leer</p>
+                        <p id="result-incorrect" class="text-2xl font-bold text-red-600">-</p>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-red-100 rounded-xl mb-6">
+                    <p class="text-sm text-red-800 font-semibold text-center">DEINE NOTE</p>
+                    <p id="result-grade" class="text-6xl font-black text-red-900 text-center mt-1">-</p>
+                </div>
+                
+                <button id="recalculateButton" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md recalculate-button mb-6 transition-transform active:scale-95" onclick="recalculateTestScore()">
+                    🔄 Note und Ergebnis neu berechnen (nach Korrektur)
+                </button>
+
+                <h4 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Detaillierte Korrektur (Manuell anpassbar)</h4>
+                <div id="test-correction" class="space-y-4">
+                    </div>
+                
+                <button class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95" onclick="showView('home')">
+                    Zurück zum Start
+                </button>
+            </div>
+        </div>
+
+        <div id="manage-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">⚙️ Vokabeln hinzufügen & verwalten</h2>
+            
+            <div class="p-6 bg-blue-50 rounded-xl border-4 border-blue-300 shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-blue-700 mb-4">➕ Manuell Vokabeln hinzufügen</h3>
+                
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="germanInput">Deutsch (German):</label>
+                        <input type="text" id="germanInput" placeholder="z.B. seinen Horizont erweitern" class="p-2 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="englishInput">Englisch (English):</label>
+                        <input type="text" id="englishInput" placeholder="z.B. to broaden one's horizons" class="p-2 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1" for="exampleInput">Beispielsatz (optional, für Lückenfüller):</label>
+                        <input type="text" id="exampleInput" placeholder="z.B. Travel helps to [VOCAB]." class="p-2 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <button class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="addManualVocabulary()">
+                    Vokabel-Paar hinzufügen
+                </button>
+                <p id="manual-status" class="text-center font-semibold mt-3 h-6 text-sm"></p>
+            </div>
+
+            <div class="p-6 bg-teal-50 rounded-xl border-4 border-teal-300 shadow-lg">
+                <h3 class="text-xl font-bold text-teal-700 mb-4">📸 Vokabeln per Foto hinzufügen (KI)</h3>
+
+                <p class="text-gray-600 mb-4 text-sm">Wählen Sie ein Bild mit Vokabelpaaren. Die KI liest die Vokabeln aus und fügt sie Ihrer Liste hinzu.</p>
+
+                <label class="block text-sm font-medium text-gray-700 mb-2" for="imageUpload">
+                    1. Foto auswählen:
+                </label>
+                <input type="file" id="imageUpload" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg mb-4">
+
+                <button id="scanButton" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="extractVocabularyFromImage()" disabled>
+                    Vokabeln scannen und extrahieren
+                </button>
+                
+                <div id="add-status" class="mt-4 flex items-center justify-center space-x-3 h-10">
+                    </div>
+
+                <div id="image-preview-container" class="mt-6 p-4 border border-gray-200 rounded-lg hidden">
+                    <p class="text-sm font-semibold text-gray-700 mb-2">Vorschau des gescannten Bildes:</p>
+                    <img id="image-preview" class="max-w-full h-auto rounded-md border" alt="Vorschau des hochgeladenen Bildes">
+                </div>
+
+                <div id="extracted-list-container" class="mt-6 hidden">
+                    <h4 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Gefundene Vokabeln (<span id="extractedCount">0</span>)</h4>
+                    <div id="extracted-list" class="space-y-2">
+                        </div>
+                </div>
+            </div>
+            
+        </div>
+
+        <div id="games-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">🎮 Interaktive Vokabel Spiele</h2>
+            
+            <div class="space-y-6">
+                
+                <div class="p-6 bg-yellow-50 rounded-xl border-4 border-yellow-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-yellow-700 mb-3 flex items-center">
+                        <span class="text-3xl mr-2">🖋️</span> Lückenfüller (Fill-in-the-Blank)
+                    </h3>
+                    <p class="text-gray-700 mb-4">Übersetze die Vokabel, die in einem Beispielsatz fehlt (10 Fragen).</p>
+                    <button class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="startGame('fill-in-blank')" id="start-fill-in-blank">
+                        Spiel starten
+                    </button>
+                    <div id="fill-in-blank-container" class="mt-4 hidden">
+                        <p class="text-center font-semibold mb-2">Frage <span id="fibCurrentQuestion">1</span> von 10</p>
+                        <div class="p-4 bg-white rounded-lg shadow-inner mb-4">
+                            <p class="text-lg text-gray-600 mb-2">Fülle die Lücke mit der korrekten englischen Übersetzung von "<span id="fibGermanTerm" class="font-bold text-yellow-800"></span>" aus:</p>
+                            <p id="fibSentence" class="text-xl font-medium text-gray-900 text-center p-3 border-b-2 border-dashed border-gray-300 italic"></p>
+                        </div>
+                        
+                        <input type="text" id="fibAnswerInput" placeholder="Deine englische Antwort eingeben..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        
+                        <div class="mt-4 space-y-2">
+                            <button id="fibCheckButton" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="checkFillInBlankAnswer()">
+                                Antwort überprüfen
+                            </button>
+                            <button id="fibNextButton" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95 hidden" onclick="loadNextFillInBlankQuestion()">
+                                Nächste Frage
+                            </button>
+                        </div>
+
+                        <p id="fibStatus" class="text-center font-semibold mt-4 h-6"></p>
+                        
+                        <div id="fibResults" class="p-6 bg-yellow-100 rounded-xl mt-6 hidden">
+                            <h4 class="text-2xl font-bold text-yellow-800 text-center mb-4">Dein Lückenfüller-Ergebnis</h4>
+                            <p class="text-center text-lg">Du hast <span id="fibScore" class="font-extrabold text-yellow-700 text-3xl">0</span> von 10 Fragen richtig beantwortet!</p>
+                            <button class="w-full mt-4 bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95" onclick="showView('games')">
+                                Zurück zu den Spielen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-green-50 rounded-xl border-4 border-green-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-green-700 mb-3 flex items-center">
+                        <span class="text-3xl mr-2">❓</span> Quiz Time! (Multiple Choice)
+                    </h3>
+                    <p class="text-gray-700 mb-4">Wähle die korrekte englische Übersetzung zur deutschen Vokabel (10 Fragen).</p>
+                    <button class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="startGame('quiz-time')" id="start-quiz-time">
+                        Spiel starten
+                    </button>
+                    
+                    <div id="quiz-time-container" class="mt-4 hidden">
+                        <p class="text-center font-semibold mb-2">Frage <span id="quizCurrentQuestion">1</span> von 10</p>
+                        <div class="p-4 bg-white rounded-lg shadow-inner mb-4">
+                            <p class="text-lg text-gray-600 mb-2">Deutsche Vokabel:</p>
+                            <p id="quizGermanTerm" class="text-2xl font-bold text-green-900 text-center"></p>
+                        </div>
+                        
+                        <div id="quizOptions" class="space-y-2">
+                            </div>
+
+                        <p id="quizStatus" class="text-center font-semibold mt-4 h-6"></p>
+                        <div class="flex justify-center mt-6">
+                            <button id="quizNextButton" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl transition-transform duration-150 active:scale-95 hidden" onclick="loadNextQuizQuestion()">
+                                Nächste Frage
+                            </button>
+                        </div>
+                         <div id="quizResults" class="p-6 bg-blue-100 rounded-xl mt-6 hidden">
+                            <h4 class="text-2xl font-bold text-blue-800 text-center mb-4">Dein Quiz-Ergebnis</h4>
+                            <p class="text-center text-lg">Du hast <span id="quizScore" class="font-extrabold text-blue-700 text-3xl">0</span> von 10 Fragen richtig beantwortet!</p>
+                            <button class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95" onclick="showView('games')">
+                                Zurück zu den Spielen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-red-50 rounded-xl border-4 border-red-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-red-700 mb-3 flex items-center">
+                        <span class="text-3xl mr-2">🔗</span> Match It! (Zuordnen)
+                    </h3>
+                    <p class="text-gray-700 mb-4">Ordne die deutschen und englischen Vokabeln per Klick zu.</p>
+                    <button class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="startGame('match-it')" id="start-match-it">
+                        Spiel starten
+                    </button>
+                    <div id="match-it-container" class="mt-4 hidden">
+                        <div class="grid grid-cols-2 gap-3" id="match-cards">
+                            </div>
+                        <p id="match-status" class="text-center font-semibold mt-4 h-6"></p>
+                    </div>
+                </div>
+                
+                <div class="p-6 bg-indigo-50 rounded-xl border-4 border-indigo-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-indigo-700 mb-3 flex items-center">
+                        <span class="text-3xl mr-2">✍️</span> Hangman (Galgenraten)
+                    </h3>
+                    <p class="text-gray-700 mb-4">Errate die englische Vokabel Buchstabe für Buchstabe anhand der deutschen Übersetzung.</p>
+                    <button class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="startGame('hangman')" id="start-hangman">
+                        Spiel starten
+                    </button>
+                    <div id="hangman-container" class="mt-4 hidden">
+                        <div class="text-center p-4 bg-white rounded-lg shadow-inner mb-4">
+                            <p class="text-lg text-gray-600 mb-2">Deutsche Vokabel:</p>
+                            <p id="hangman-german" class="text-2xl font-bold text-indigo-900"></p>
+                            <div class="flex justify-center mt-4">
+                                <p id="hangman-word" class="hangman-word space-x-2"></p>
+                            </div>
+                            <p id="hangman-guesses" class="text-sm text-red-600 mt-2">Fehlversuche: <span id="hangman-mistakes">0</span> / 6</p>
+                        </div>
+                        
+                        <div id="hangman-keyboard" class="hangman-keyboard flex flex-wrap justify-center mb-4">
+                            </div>
+                        
+                        <p id="hangman-status" class="text-center font-semibold mt-4 h-6"></p>
+                    </div>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+    <script>
+        // ----------------------------------------------------------------------
+        // 1. Initial Data, Constants, and Storage
+        // ----------------------------------------------------------------------
+        
+        // Konstante für die Anzahl der Boxen im Kastensystem
+        const NUM_BOXES = 5; 
+        
+        // Basis-Vokabeln, die nur beim ERSTEN Start verwendet werden, falls kein Local Storage vorhanden ist.
+        // **NEU: Jede Vokabel erhält beim ersten Start die Eigenschaft 'box: 1'**
+        const DEFAULT_VOCABULARY = [
+            { german: "to adjust (to)", english: "einstellen, anpassen (an)", example: "It is still hard for me to adjust to living on the countryside.", box: 1 },
+            { german: "response", english: "Antwort, Reaktion", example: "His sharp response confused me.", box: 1 },
+            { german: "antidote", english: "Gegenmittel, Gegengift", example: "For Stephanie, riding the motorcycle on the weekend is the perfect antidote to the boredom of her office job.", box: 1 },
+            { german: "cabin fever", english: "Lagerkoller, Gefühl der Beengtheit", example: "I easily suffer from cabin fever if I stay indoors for too long.", box: 1 },
+            { german: "to mock", english: "(ver)spotten, (ver)höhnen", example: "The popular students mocked the students who were bad at sport.", box: 1 },
+            { german: "wisdom (no pl)", english: "Weisheit, Klugheit", example: "I always admired my grandfather's wisdom.", box: 1 },
+            { german: "itinerary", english: "Reiseroute, Reiseplan", example: "When travelling on your own, it is a good idea to plan your itinerary in advance.", box: 1 },
+            { german: "a kernel of truth", english: "ein Körnchen Wahrheit", example: "I thought his speech was full of exaggerations, nonetheless there was a kernel of truth in what he said.", box: 1 },
+            { german: "stretch", english: "Zeitraum, (Strecken)abschnitt, Stück", example: "The final stretch of the season was very exhausting for the players.", box: 1 },
+            { german: "crammed", english: "vollgestopft", example: "No wonder: the suitcase won't close – look how crammed it is!", box: 1 },
+            { german: "to tempt sb", english: "jdn in Versuchung führen", example: "Can I tempt you into eating meat with one of my delicious sausage rolls?", box: 1 },
+            { german: "to long for sth", english: "sich nach etw sehnen", example: "I always long for the summer holidays.", box: 1 },
+            { german: "handy", english: "praktisch, nützlich, griffbereit", example: "This tool is very handy when you need to join two pieces of wood or metal.", box: 1 },
+            { german: "to fast forward (no pl)", english: "vorspulen", example: "Sometimes, I wish I could fast forward to the future.", box: 1 },
+            { german: "tight", english: "fest, eng, hier: knapp", example: "My budget for this year's holiday is very tight, I wish I had saved more money.", box: 1 },
+            { german: "minimum wage (no pl)", english: "Mindestlohn", example: "Last year, the minimum wage was raised by the government.", box: 1 },
+            { german: "attendant", english: "Aufseher/in, Wärter/in, hier: Bademeister/in", example: "Last summer, my brother worked as an attendant at the local swimming pool.", box: 1 },
+            { german: "aside from", english: "abgesehen von", example: "Aside from my summer job, I also receive a bit of money from my parents.", box: 1 },
+            { german: "suburbia (no pl)", english: "Vororte, Randbezirke", example: "Suburbia is a term often used to connote the attitudes and habits of people living in the suburbs.", box: 1 },
+            { german: "facility", english: "Anlage, Einrichtung", example: "There are a few recreational facilities near our place.", box: 1 },
+            { german: "to cease", english: "(be)enden, aufhören", example: "At noon, the rain had suddenly ceased.", box: 1 },
+            { german: "consequential", english: "folgerichtig, wichtig", example: "Did you make any consequential changes to the schedule since we last met?", box: 1 },
+            { german: "burdensome", english: "belastend, mühsam, lästig", example: "My job has become quite burdensome in recent years.", box: 1 },
+            { german: "post-graduate", english: "nach beendetem Studium", example: "After university, I spend my first post-graduate year doing odd jobs.", box: 1 },
+            { german: "to loom", english: "(drohend) auftauchen", example: "Look at those storm clouds looming on the horizon – it will rain pretty soon, I think!", box: 1 },
+            { german: "to shed/throw light on sth", english: "Aufschluss über etw geben", example: "The article sheds light on the problem of homelessness.", box: 1 },
+            { german: "to investigate", english: "untersuchen, nachgehen", example: "The police investigated the murder case.", box: 1 },
+            { german: "beneficial", english: "nützlich, vorteilhaft", example: "It is sometimes beneficial to include a diagram when trying to explain something.", box: 1 },
+            { german: "to be in demand", english: "gefragt sein", example: "Shortly after the pandemic, face masks started to be in demand.", box: 1 },
+            { german: "to omit", english: "außer Acht lassen, auslassen, unterlassen", example: "I will omit any information I find unnecessary.", box: 1 },
+            { german: "pamphlet", english: "(kleine) Broschüre, Faltblatt, Pamphlet", example: "Can you help me design a short pamphlet for my German class?", box: 1 },
+            { german: "plus", english: "darüber hinaus, zusätzlich, außerdem", example: "I'm not very good at sports. Plus, I have recently sprained my ankle.", box: 1 },
+            { german: "fellow", english: "Mit..., ...genosse/genossin, Kollege/Kollegin", example: "My fellow colleagues also complained about their work.", box: 1 },
+            { german: "fruitful", english: "fruchtbar, ertragreich, hier: lohnend", example: "My year abroad turned out to be very fruitful.", box: 1 },
+            { german: "to flounder", english: "stolpern, strampeln, sich abmühen", example: "During the speech, the mayor suddenly started to flounder.", box: 1 },
+            { german: "to graduate", english: "einen (Universitäts)abschluss erwerben", example: "I want to graduate with a good grade.", box: 1 }
+        ];
+
+        // Die Haupt-Vokabelliste
+        let VOCABULARY_BASE = [];
+        
+        const TEST_VOCABULARY_COUNT = 15; 
+        let testQuestions = []; 
+        let testResults = []; 
+        
+        // Train View Variables
+        // **cards ist jetzt ein Array von Vokabeln, die heute trainiert werden sollen**
+        let cards = []; 
+        // **currentCard ist der Index im cards-Array**
+        let currentCardIndex = 0;
+        let correctAnswersCount = 0; 
+        let initialDeckSize = 0;
+        // **NEU: Speichert die gerade aktive Vokabel aus VOCABULARY_BASE**
+        let activeVocab = null; 
+        // **NEU: Speichert die Boxen, die trainiert werden sollen (Standard: Box 1)**
+        let selectedTrainingBoxes = [1]; 
+
+
+        // Games View Variables (Unverändert)
+        let matchCardsData = [];
+        let selectedMatchCard = null;
+        let matchesFound = 0;
+        
+        let hangmanWord = '';
+        let hangmanHint = '';
+        let guessedLetters = [];
+        let mistakes = 0;
+        const maxMistakes = 6;
+        
+        let quizQuestions = [];
+        let quizCurrentQuestionIndex = 0;
+        let quizScore = 0;
+        const QUIZ_COUNT = 10;
+        
+        let fibQuestions = [];
+        let fibCurrentQuestionIndex = 0;
+        let fibScore = 0;
+        const FIB_COUNT = 10;
+        
+        
+        // --- SPEICHERFUNKTIONEN ---
+        const STORAGE_KEY = 'vokabeltrainer_v19_vocab';
+        // **NEU: Speichert die Auswahl der Boxen für das Training**
+        const SELECTED_BOXES_KEY = 'vokabeltrainer_v19_selected_boxes';
+        
+        // **ENTFERNT: BOX_TRAIN_DATE_KEY - DIESE KONSTANTE WIRD NICHT MEHR BENÖTIGT.**
+
+        function loadVocabulary() {
+            try {
+                const storedVocab = localStorage.getItem(STORAGE_KEY);
+                if (storedVocab) {
+                    VOCABULARY_BASE = JSON.parse(storedVocab);
+                    
+                    // **NEU: Füge 'box: 1' zu Vokabeln hinzu, die noch keine Box haben (für ältere Speicherstände)**
+                    VOCABULARY_BASE.forEach(v => {
+                        if (typeof v.box !== 'number' || v.box < 1 || v.box > NUM_BOXES) {
+                            v.box = 1; 
+                        }
+                    });
+                    
+                } else {
+                    // Beim ersten Start die Standard-Vokabeln laden und speichern
+                    VOCABULARY_BASE = DEFAULT_VOCABULARY;
+                    saveVocabulary();
+                }
+                
+                // **NEU: Geladene Box-Auswahl**
+                const storedBoxes = localStorage.getItem(SELECTED_BOXES_KEY);
+                if (storedBoxes) {
+                    selectedTrainingBoxes = JSON.parse(storedBoxes);
+                }
+                
+            } catch (e) {
+                console.error("Fehler beim Laden der Vokabeln aus Local Storage:", e);
+                // Fallback zu Standard-Vokabeln
+                VOCABULARY_BASE = DEFAULT_VOCABULARY;
+            }
+        }
+
+        function saveVocabulary() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(VOCABULARY_BASE));
+                console.log(`Vokabeln gespeichert. Gesamtanzahl: ${VOCABULARY_BASE.length}`);
+            } catch (e) {
+                console.error("Fehler beim Speichern der Vokabeln in Local Storage:", e);
+            }
+        }
+        
+        // **NEU: Speichern der Box-Auswahl**
+        function saveSelectedBoxes() {
+             localStorage.setItem(SELECTED_BOXES_KEY, JSON.stringify(selectedTrainingBoxes));
+        }
+        
+        // **ENTFERNT: setBoxTrainedDate() - DIESE FUNKTION WIRD NICHT MEHR BENÖTIGT.**
+        // **ENTFERNT: hasBoxBeenTrainedToday() - DIESE FUNKTION WIRD NICHT MEHR BENÖTIGT.**
+
+
+        // ----------------------------------------------------------------------
+        // 2. DOM Elements
+        // ----------------------------------------------------------------------
+        
+        const cardElement = document.getElementById('flashcard');
+        const frontTextElement = document.getElementById('cardFront').querySelector('p');
+        const backTextElement = document.getElementById('cardBack').querySelector('p');
+        const answerInput = document.getElementById('answerInput');
+        const checkButton = document.getElementById('checkButton');
+        const startButton = document.getElementById('startButton');
+        const showAnswerButton = document.getElementById('showAnswerButton');
+        const nextActions = document.getElementById('nextActions');
+        const feedbackElement = document.getElementById('feedback');
+        const currentCardIndexElement = document.getElementById('currentCardIndex');
+        const totalCardsElement = document.getElementById('totalCards');
+        const progressBar = document.getElementById('progressBar');
+        const vocabularyListBody = document.getElementById('vocabularyListBody');
+        const listTotalCountElement = document.getElementById('listTotalCount');
+        const testContainer = document.getElementById('test-container');
+        const testResultsContainer = document.getElementById('test-results');
+        const testInfoElement = document.getElementById('test-info');
+        const testQuestionsContainer = document.getElementById('test-questions');
+        const submitTestButton = document.getElementById('submitTestButton');
+        const startTestButton = document.getElementById('startTestButton');
+        const resultCorrectElement = document.getElementById('result-correct');
+        const resultIncorrectElement = document.getElementById('result-incorrect');
+        const resultGradeElement = document.getElementById('result-grade');
+        const testCorrectionContainer = document.getElementById('test-correction');
+        const imageUpload = document.getElementById('imageUpload');
+        const scanButton = document.getElementById('scanButton');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const addStatus = document.getElementById('add-status');
+        const extractedListContainer = document.getElementById('extracted-list-container');
+        const extractedList = document.getElementById('extracted-list');
+        const extractedCount = document.getElementById('extractedCount');
+        // **NEU: Box Stats Element für Train View**
+        const boxStatsElement = document.getElementById('box-stats'); 
+        // **NEU: Box Stats Element für Home View**
+        const boxStatsHomeElement = document.getElementById('box-stats-home');
+        // **NEU: Box Selection Container für Train View**
+        const boxSelectionContainer = document.getElementById('box-selection-container');
+        // **NEU: List Filter Info für List View**
+        const listFilterInfo = document.getElementById('list-filter-info');
+        
+        // NEUE MANAGE ELEMENTE
+        const germanInput = document.getElementById('germanInput');
+        const englishInput = document.getElementById('englishInput');
+        const exampleInput = document.getElementById('exampleInput');
+        const manualStatus = document.getElementById('manual-status');
+
+        // Games View Elements (Unverändert)
+        const matchItContainer = document.getElementById('match-it-container');
+        const matchCardsContainer = document.getElementById('match-cards');
+        const matchStatus = document.getElementById('match-status');
+        const hangmanContainer = document.getElementById('hangman-container');
+        const hangmanGerman = document.getElementById('hangman-german');
+        const hangmanWordElement = document.getElementById('hangman-word');
+        const hangmanMistakes = document.getElementById('hangman-mistakes');
+        const hangmanKeyboard = document.getElementById('hangman-keyboard');
+        const hangmanStatus = document.getElementById('hangman-status');
+        const quizTimeContainer = document.getElementById('quiz-time-container');
+        const quizGermanTerm = document.getElementById('quizGermanTerm');
+        const quizOptionsContainer = document.getElementById('quizOptions');
+        const quizCurrentQuestionElement = document.getElementById('quizCurrentQuestion');
+        const quizStatus = document.getElementById('quizStatus');
+        const quizNextButton = document.getElementById('quizNextButton');
+        const quizResultsContainer = document.getElementById('quizResults');
+        const quizScoreElement = document.getElementById('quizScore');
+
+        const fillInBlankContainer = document.getElementById('fill-in-blank-container');
+        const fibCurrentQuestionElement = document.getElementById('fibCurrentQuestion');
+        const fibGermanTerm = document.getElementById('fibGermanTerm');
+        const fibSentence = document.getElementById('fibSentence');
+        const fibAnswerInput = document.getElementById('fibAnswerInput');
+        const fibCheckButton = document.getElementById('fibCheckButton');
+        const fibNextButton = document.getElementById('fibNextButton');
+        const fibStatus = document.getElementById('fibStatus');
+        const fibResultsContainer = document.getElementById('fibResults');
+        const fibScoreElement = document.getElementById('fibScore');
+
+
+        // ----------------------------------------------------------------------
+        // 3. Helper Functions (Unverändert)
+        // ----------------------------------------------------------------------
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function normalizeAnswer(answer) {
+            answer = answer.toLowerCase();
+            answer = answer.replace(/\([^)]*\)/g, '').trim(); 
+            answer = answer.replace(/[^a-zäöüß/\s']/g, ''); 
+            return answer.replace(/\s+/g, ' ').trim();
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const base64String = reader.result.split(',')[1]; 
+                    resolve(base64String);
+                };
+                reader.onerror = error => reject(error);
+            });
+        }
+        
+        // ----------------------------------------------------------------------
+        // 4. Navigation Logic
+        // ----------------------------------------------------------------------
+
+        window.showView = function(viewId, filterBox = null) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.add('hidden');
+            });
+
+            const activeView = document.getElementById(viewId + '-view');
+            if (activeView) {
+                activeView.classList.remove('hidden');
+            }
+
+            // Spezifische Initialisierung
+            if (viewId === 'home') {
+                 // **NEU: Render Box Stats für die Home-Seite**
+                renderBoxStatsHome();
+            } else if (viewId === 'list') {
+                // **FilterBox-Parameter an renderVocabularyList übergeben**
+                renderVocabularyList(filterBox);
+            } else if (viewId === 'train') {
+                // **NEU: Box-Statistiken rendern und Box-Auswahl rendern**
+                renderBoxStats();
+                renderBoxSelection();
+                
+                totalCardsElement.textContent = VOCABULARY_BASE.length;
+                currentCardIndexElement.textContent = correctAnswersCount;
+                if (cards.length === 0) {
+                    frontTextElement.textContent = 'Klicke auf START';
+                    backTextElement.textContent = '';
+                    startButton.classList.remove('hidden');
+                    checkButton.classList.add('hidden');
+                    showAnswerButton.classList.add('hidden'); 
+                    nextActions.classList.add('hidden');
+                    answerInput.disabled = true;
+                    cardElement.classList.remove('flipped'); 
+                    const baseProgress = initialDeckSize > 0 ? (correctAnswersCount / initialDeckSize) * 100 : 0;
+                    progressBar.style.width = `${baseProgress}%`;
+                }
+            } else if (viewId === 'test') {
+                testContainer.classList.remove('hidden');
+                testResultsContainer.classList.add('hidden');
+                startTestButton.classList.remove('hidden');
+                submitTestButton.classList.add('hidden');
+                testQuestionsContainer.innerHTML = '';
+                testInfoElement.textContent = `Bereit für den Test? Es werden ${TEST_VOCABULARY_COUNT} zufällige Vokabeln abgefragt.`;
+            } else if (viewId === 'manage') { 
+                imagePreviewContainer.classList.add('hidden');
+                extractedListContainer.classList.add('hidden');
+                addStatus.innerHTML = '';
+                manualStatus.innerHTML = '';
+                germanInput.value = '';
+                englishInput.value = '';
+                exampleInput.value = '';
+
+                if (imageUpload.files.length > 0) {
+                    scanButton.disabled = false;
+                    const file = imageUpload.files[0];
+                     const reader = new FileReader();
+                     reader.onload = (e) => {
+                         imagePreview.src = e.target.result;
+                         imagePreviewContainer.classList.remove('hidden');
+                     };
+                     reader.readAsDataURL(file);
+                } else {
+                    scanButton.disabled = true;
+                }
+            } else if (viewId === 'games') {
+                 matchItContainer.classList.add('hidden');
+                 hangmanContainer.classList.add('hidden');
+                 quizTimeContainer.classList.add('hidden');
+                 fillInBlankContainer.classList.add('hidden'); 
+                 
+                 document.querySelectorAll('#games-view button[id^="start-"]').forEach(btn => btn.disabled = false);
+            }
+
+             // Hervorheben des aktiven Navigations-Buttons
+             document.querySelectorAll('.nav-button').forEach(button => {
+                const isCurrentView = button.onclick.toString().includes(`showView('${viewId}')`);
+                
+                button.classList.remove('bg-blue-200', 'hover:bg-blue-300', 'bg-red-200', 'hover:bg-red-300', 'bg-teal-200', 'hover:bg-teal-300', 'bg-orange-200', 'hover:bg-orange-300', 'bg-indigo-200', 'hover:bg-indigo-300');
+                button.classList.add('bg-gray-200', 'hover:bg-gray-300');
+
+                if (isCurrentView) {
+                    let baseClass = 'gray';
+                    if (viewId === 'train') baseClass = 'blue';
+                    else if (viewId === 'test') baseClass = 'red';
+                    // Der Nav-Button für Manage ist der gleiche wie der Home-Button
+                    else if (viewId === 'list') baseClass = 'indigo';
+                    else if (viewId === 'games') baseClass = 'orange';
+                    else if (viewId === 'home') baseClass = 'gray'; // Home ist der Standard-Grauton
+                    
+                    button.classList.replace('bg-gray-200', `bg-${baseClass}-200`);
+                    button.classList.replace('hover:bg-gray-300', `hover:bg-${baseClass}-300`);
+                }
+            });
+        }
+        
+        // Event-Listener für das Bild-Upload-Feld
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+                scanButton.disabled = false;
+            } else {
+                imagePreviewContainer.classList.add('hidden');
+                scanButton.disabled = true;
+            }
+            extractedListContainer.classList.add('hidden');
+            addStatus.innerHTML = '';
+        });
+        
+        // **NEUE FUNKTION: Wechselt zur Listenansicht und filtert nach Kasten**
+        window.showBoxVocabularyList = function(boxNumber) {
+             showView('list', boxNumber);
+        }
+
+        // ----------------------------------------------------------------------
+        // 5. MANUELLE HINZUFÜGUNG Logik
+        // ----------------------------------------------------------------------
+
+        window.addManualVocabulary = function() {
+            const german = germanInput.value.trim();
+            const english = englishInput.value.trim();
+            const example = exampleInput.value.trim();
+
+            if (!german || !english) {
+                manualStatus.innerHTML = '<span class="text-red-500">❌ Bitte füllen Sie das Deutsch- und das Englischfeld aus.</span>';
+                return;
+            }
+
+            const newCard = {
+                german: german,
+                english: english,
+                example: example || `You need to learn the English word for "${german}". The correct word is [VOCAB].`,
+                // **NEU: Neue Vokabeln starten in Box 1**
+                box: 1 
+            };
+
+            // Vokabelliste aktualisieren
+            addNewVocabulary([newCard]);
+
+            // UI zurücksetzen
+            manualStatus.innerHTML = '<span class="text-green-600">✅ Vokabel erfolgreich hinzugefügt!</span>';
+            germanInput.value = '';
+            englishInput.value = '';
+            exampleInput.value = '';
+            germanInput.focus();
+
+            // Nach 2 Sekunden Status-Meldung zurücksetzen
+            setTimeout(() => manualStatus.innerHTML = '', 2000);
+        }
+
+        // ----------------------------------------------------------------------
+        // 6. KI-Logik (Manage View) - Unverändert
+        // ----------------------------------------------------------------------
+        const VOCABULARY_SCHEMA = {
+            type: "ARRAY",
+            description: "Eine Liste von Vokabelpaaren, extrahiert aus dem Bild. Jedes Element sollte die deutsche Vokabel und deren englische Übersetzung enthalten.",
+            items: {
+                type: "OBJECT",
+                properties: {
+                    "german": {
+                        "type": "STRING",
+                        "description": "Die Vokabel in deutscher Sprache."
+                    },
+                    "english": {
+                        "type": "STRING",
+                        "description": "Die Vokabel in englischer Sprache."
+                    }
+                },
+                required: ["german", "english"]
+            }
+        };
+        
+        window.extractVocabularyFromImage = async function() {
+            const file = imageUpload.files[0];
+            if (!file) { addStatus.innerHTML = '<span class="text-red-500">❌ Bitte wählen Sie zuerst ein Bild aus.</span>'; return; }
+
+            scanButton.disabled = true;
+            addStatus.innerHTML = '<div class="loading-indicator"></div><span class="ml-2 text-blue-600 font-medium">Scanne Bild und extrahiere Vokabeln...</span>';
+            extractedListContainer.classList.add('hidden');
+
+            try {
+                const base64ImageData = await fileToBase64(file);
+                const mimeType = file.type;
+
+                // --- KI-SIMULATION START ---
+                // Echte KI-Aufrufe werden hier durch Dummy-Ergebnisse ersetzt.
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Simuliere Ladezeit
+                const dummyResult = [
+                     { german: "Dummy-Vokabel 1", english: "dummy vocabulary 1" },
+                     { german: "Dummy-Vokabel 2", english: "dummy vocabulary 2" }
+                ];
+                const newVocabulary = dummyResult; 
+                // --- KI-SIMULATION ENDE ---
+                
+                addNewVocabulary(newVocabulary);
+                
+                addStatus.innerHTML = `<span class="text-green-600 font-medium">✅ ${newVocabulary.length} neue Vokabeln erfolgreich hinzugefügt!</span>`;
+                renderExtractedList(newVocabulary);
+
+            } catch (error) {
+                console.error("Fehler beim Extrahieren der Vokabeln:", error);
+                let errorMessage = error.message.includes("Forbidden") ? "Zugriff verweigert (Berechtigungsproblem)." : error.message;
+                addStatus.innerHTML = `<span class="text-red-500 font-medium">❌ Fehler: Konnte Vokabeln nicht extrahieren. (${errorMessage}). Bitte versuchen Sie es erneut.</span>`;
+            } finally {
+                scanButton.disabled = false;
+            }
+        }
+
+        function addNewVocabulary(newCards) {
+            if (Array.isArray(newCards)) {
+                const validNewCards = newCards.filter(card => 
+                    card.german && card.english && card.german.trim() !== '' && card.english.trim() !== ''
+                );
+                // Beispiel-Satz hinzufügen, falls nicht vorhanden (für Fill-in-Blank)
+                validNewCards.forEach(card => {
+                    if (!card.example) {
+                        card.example = `You need to learn the English word for "${card.german}". The correct word is [VOCAB].`;
+                    }
+                    // **NEU: Setze neue Vokabeln in Box 1**
+                    if (typeof card.box !== 'number') {
+                         card.box = 1; 
+                    }
+                });
+                VOCABULARY_BASE = VOCABULARY_BASE.concat(validNewCards);
+                saveVocabulary(); // WICHTIG: Nach jeder Änderung speichern
+                initialDeckSize = VOCABULARY_BASE.length; // Wichtig: Größe aktualisieren
+                // **NEU: Box-Statistiken aktualisieren**
+                renderBoxStats(); 
+                renderBoxStatsHome();
+            }
+        }
+
+        function renderExtractedList(list) {
+            extractedList.innerHTML = '';
+            extractedCount.textContent = list.length;
+            extractedListContainer.classList.remove('hidden');
+
+            list.forEach((card, index) => {
+                const item = document.createElement('div');
+                item.classList.add('flex', 'justify-between', 'items-center', 'p-3', 'bg-white', 'rounded-md', 'shadow-sm', 'border-l-4', 'border-teal-400');
+                item.innerHTML = `
+                    <div class="text-sm">
+                        <p class="font-semibold text-gray-800">${card.german}</p>
+                        <p class="text-gray-600 italic">${card.english}</p>
+                    </div>
+                    <span class="text-xs text-teal-600 font-bold">NEU (Box 1)</span>
+                `; // **NEU: Hinweis auf Box 1**
+                extractedList.appendChild(item);
+            });
+            
+            if (list.length === 0) {
+                 extractedList.innerHTML = '<p class="text-center text-gray-500 p-4">Es wurden keine gültigen Vokabelpaare gefunden.</p>';
+            }
+        }
+        
+        // ----------------------------------------------------------------------
+        // 7. List View Logic (inkl. Löschen und Filtern)
+        // ----------------------------------------------------------------------
+        // **ÄNDERUNG: Akzeptiert optional eine Box-Nummer zum Filtern**
+        function renderVocabularyList(filterBox = null) {
+            vocabularyListBody.innerHTML = '';
+            
+            let filteredVocab = [...VOCABULARY_BASE];
+            
+            if (filterBox !== null && filterBox !== 'all') {
+                 filteredVocab = VOCABULARY_BASE.filter(v => v.box === filterBox);
+                 listFilterInfo.textContent = `Vokabeln in Kasten ${filterBox} (insgesamt: ${filteredVocab.length})`;
+            } else {
+                 listFilterInfo.textContent = `Alle Vokabeln werden angezeigt (insgesamt: ${VOCABULARY_BASE.length})`;
+            }
+            
+            filteredVocab.sort((a, b) => a.german.localeCompare(b.german));
+            
+            filteredVocab.forEach((card, index) => {
+                const row = vocabularyListBody.insertRow();
+                row.classList.add('hover:bg-gray-50', 'transition-colors');
+                
+                let cellGerman = row.insertCell();
+                cellGerman.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
+                cellGerman.textContent = card.german;
+                
+                let cellEnglish = row.insertCell();
+                cellEnglish.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
+                cellEnglish.textContent = card.english;
+                
+                // **NEU: Box-Spalte**
+                let cellBox = row.insertCell();
+                cellBox.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-center', 'text-sm', 'font-bold');
+                cellBox.textContent = `Box ${card.box}`;
+                
+                let cellAction = row.insertCell();
+                cellAction.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = '🗑️ Löschen';
+                deleteButton.classList.add('text-red-600', 'hover:text-red-900', 'transition-colors', 'font-bold');
+                // Index wird verwendet, da die Liste sortiert ist
+                deleteButton.onclick = () => deleteVocabularyItem(card); // **ÄNDERUNG: Übergibt das Vokabel-Objekt**
+                cellAction.appendChild(deleteButton);
+            });
+            
+            listTotalCountElement.textContent = VOCABULARY_BASE.length;
+        }
+        
+        window.deleteVocabularyItem = function(vocabToDelete) {
+            // Bestätigung abfragen
+            if (!confirm(`Soll die Vokabel "${vocabToDelete.german}" wirklich gelöscht werden?`)) {
+                return;
+            }
+
+            // Finde den Index dieser Vokabel im VOCABULARY_BASE
+            const actualIndex = VOCABULARY_BASE.findIndex(v => v.german === vocabToDelete.german && v.english === vocabToDelete.english);
+            
+            if (actualIndex > -1) {
+                VOCABULARY_BASE.splice(actualIndex, 1);
+                saveVocabulary(); // Speichern
+                // **ÄNDERUNG: Ruft renderVocabularyList ohne Filter auf, um die Gesamtansicht neu zu laden**
+                renderVocabularyList(); 
+                renderBoxStats(); 
+                renderBoxStatsHome();
+            }
+        }
+
+        // ----------------------------------------------------------------------
+        // 8. Train View Logic (MIT KASTENSYSTEM & AUSWAHL)
+        // ----------------------------------------------------------------------
+        
+        // **NEUE FUNKTION: Rendert die Checkboxen für die Kasten-Auswahl**
+        function renderBoxSelection() {
+            boxSelectionContainer.innerHTML = '';
+            for (let i = 1; i <= NUM_BOXES; i++) {
+                const boxDiv = document.createElement('div');
+                boxDiv.classList.add('flex', 'items-center', 'space-x-1');
+                
+                const boxCheckbox = document.createElement('input');
+                boxCheckbox.type = 'checkbox';
+                boxCheckbox.id = `box-select-${i}`;
+                boxCheckbox.value = i;
+                boxCheckbox.classList.add('h-4', 'w-4', 'text-blue-600', 'border-gray-300', 'rounded', 'focus:ring-blue-500');
+                boxCheckbox.checked = selectedTrainingBoxes.includes(i);
+                boxCheckbox.onchange = () => handleBoxSelectionChange(i, boxCheckbox.checked);
+                
+                const boxLabel = document.createElement('label');
+                boxLabel.htmlFor = `box-select-${i}`;
+                boxLabel.textContent = `Box ${i}`;
+                boxLabel.classList.add('text-sm', 'font-medium', 'text-gray-700');
+                
+                boxDiv.appendChild(boxCheckbox);
+                boxDiv.appendChild(boxLabel);
+                boxSelectionContainer.appendChild(boxDiv);
+            }
+        }
+        
+        // **NEUE FUNKTION: Behandelt die Änderung der Kasten-Auswahl**
+        window.handleBoxSelectionChange = function(boxNumber, isChecked) {
+             if (isChecked) {
+                 if (!selectedTrainingBoxes.includes(boxNumber)) {
+                     selectedTrainingBoxes.push(boxNumber);
+                 }
+             } else {
+                 selectedTrainingBoxes = selectedTrainingBoxes.filter(box => box !== boxNumber);
+                 // Stelle sicher, dass mindestens eine Box ausgewählt ist (optional)
+                 if (selectedTrainingBoxes.length === 0) {
+                     selectedTrainingBoxes = [1];
+                     // Setze die Box 1 Checkbox wieder auf checked, um Konsistenz zu gewährleisten
+                     document.getElementById('box-select-1').checked = true;
+                     // Optional: Feedback geben
+                     alert('Mindestens eine Box muss für das Training ausgewählt sein. Box 1 wurde automatisch ausgewählt.');
+                 }
+             }
+             saveSelectedBoxes();
+             renderBoxStats(); // Update die Box-Stats im Train-View
+        }
+        
+        // **REPARIERTE FUNKTION: Die 24-Stunden-Sperre für Box 1 wurde entfernt.**
+        window.getCardsForTraining = function() { // **FIX: Funktion global definieren (window.)**
+            if (selectedTrainingBoxes.length === 0) {
+                 return [];
+            }
+            
+            const today = new Date().toDateString();
+            const dayOfMonth = new Date().getDate();
+
+            const cardsToReview = VOCABULARY_BASE.filter(v => {
+                const box = v.box || 1; 
+                
+                // 1. Filter: Ist die Box ausgewählt?
+                if (!selectedTrainingBoxes.includes(box)) {
+                     return false;
+                }
+
+                // 2. Filter: Ist die Karte heute fällig?
+                // Box 1: JETZT IMMER FÄLLIG (KEINE WARTELOGIK MEHR)
+                if (box === 1) {
+                    return true; // **REPARATUR: Immer fällig!**
+                } 
+                // Box 2: Jede Karte in Box 2
+                else if (box === 2) {
+                    return true;
+                }
+                // Box 3: Jeden 2. Tag (ungerade Tage: 1, 3, 5, ...)
+                else if (box === 3) {
+                    return dayOfMonth % 2 !== 0; 
+                }
+                // Box 4: Jeden 4. Tag (z.B. 1, 5, 9, 13, ...)
+                else if (box === 4) {
+                    return dayOfMonth % 4 === 1; 
+                }
+                // Box 5 (Mastered): Jeden 8. Tag (z.B. 1, 9, 17, 25, ...)
+                else if (box === 5) {
+                    return dayOfMonth % 8 === 1; 
+                }
+                // Fallback für zukünftige Boxen oder Fehler
+                return false; 
+            });
+            
+            // Box 1 Karten werden ganz am Anfang des Trainings einmalig abgefragt.
+            const box1Cards = cardsToReview.filter(v => v.box === 1);
+            
+            // Die restlichen Boxen werden gemischt (Box 2, 3, 4, 5)
+            const otherCards = shuffleArray(cardsToReview.filter(v => v.box > 1));
+            
+            // Mische alle fälligen Karten und die ausgewählten Boxen
+            return shuffleArray([...box1Cards, ...otherCards]);
+        }
+        
+        // **NEUE FUNKTION: Rendert die Box-Statistiken auf der Home-Seite**
+        function renderBoxStatsHome() {
+            const boxCounts = {};
+            for (let i = 1; i <= NUM_BOXES; i++) {
+                boxCounts[i] = VOCABULARY_BASE.filter(v => v.box === i).length;
+            }
+            
+            boxStatsHomeElement.innerHTML = '';
+
+            for (let i = 1; i <= NUM_BOXES; i++) {
+                let colorClass = 'bg-gray-200';
+                let borderColor = 'border-gray-400';
+                if (i === 1) { colorClass = 'bg-red-100'; borderColor = 'border-red-400'; }
+                else if (i === NUM_BOXES) { colorClass = 'bg-green-100'; borderColor = 'border-green-400'; }
+                else if (i === 2) { colorClass = 'bg-yellow-100'; borderColor = 'border-yellow-400'; }
+                else if (i === 3) { colorClass = 'bg-blue-100'; borderColor = 'border-blue-400'; }
+                else if (i === 4) { colorClass = 'bg-indigo-100'; borderColor = 'border-indigo-400'; }
+
+
+                const cardHtml = `
+                    <div class="p-4 ${colorClass} rounded-xl shadow-md border-2 ${borderColor} cursor-pointer hover:shadow-lg transition-shadow duration-150" 
+                         onclick="showBoxVocabularyList(${i})">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-bold text-gray-800">Kasten ${i}</h3>
+                            <span class="text-2xl font-extrabold text-gray-900">${boxCounts[i]}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-1">Vokabeln</p>
+                    </div>
+                `;
+                boxStatsHomeElement.innerHTML += cardHtml;
+            }
+        }
+        
+        // **GEÄNDERTE FUNKTION: Rendert die Box-Statistiken im Train-View**
+        function renderBoxStats() {
+            const boxCounts = {};
+            for (let i = 1; i <= NUM_BOXES; i++) {
+                boxCounts[i] = 0;
+            }
+            
+            VOCABULARY_BASE.forEach(v => {
+                const box = v.box || 1;
+                if (box >= 1 && box <= NUM_BOXES) {
+                    boxCounts[box]++;
+                }
+            });
+            
+            let html = '';
+            for (let i = 1; i <= NUM_BOXES; i++) {
+                // Farben und Beschriftung für die Boxen
+                let colorClass = 'bg-gray-300';
+                if (i === 1) colorClass = 'bg-red-400 text-white';
+                else if (i === NUM_BOXES) colorClass = 'bg-green-500 text-white';
+                else colorClass = 'bg-yellow-400';
+                
+                // **NEU: Hebe ausgewählte Boxen hervor**
+                const isSelected = selectedTrainingBoxes.includes(i);
+                const selectionClass = isSelected ? 'ring-4 ring-offset-1 ring-blue-500/50' : '';
+                
+                html += `<div title="${isSelected ? 'Für Training ausgewählt' : 'Nicht ausgewählt'}" class="py-1 px-3 rounded-full font-bold ${colorClass} ${selectionClass}">Box ${i}: ${boxCounts[i]}</div>`;
+            }
+            
+            boxStatsElement.innerHTML = `<div class="flex flex-wrap justify-center gap-2">${html}</div>`;
+        }
+
+
+        window.handleCardClick = function() {
+            if (cards.length > 0) {
+                if (nextActions.classList.contains('hidden')) {
+                    cardElement.classList.toggle('flipped');
+                    
+                    if (!cardElement.classList.contains('flipped')) {
+                        feedbackElement.textContent = 'Gib die englische Übersetzung ein.';
+                        answerInput.disabled = false;
+                        checkButton.disabled = false;
+                        answerInput.focus();
+                    } else {
+                        feedbackElement.innerHTML = '<span class="text-blue-600 font-bold">Die Antwort ist aufgedeckt. Wähle den Status:</span>';
+                        checkButton.disabled = true;
+                        answerInput.disabled = true;
+                        showAnswerButton.classList.remove('hidden'); 
+                        nextActions.classList.remove('hidden'); 
+                    }
+
+                } else {
+                    cardElement.classList.toggle('flipped');
+                    if (cardElement.classList.contains('flipped')) {
+                        feedbackElement.innerHTML = '<span class="text-blue-600 font-bold">Die Antwort ist aufgedeckt. Wähle den Status:</span>';
+                    } else {
+                        feedbackElement.innerHTML = '<span class="text-blue-600 font-bold">Sieh dir die Vokabel nochmal an. Wähle den Status:</span>';
+                    }
+                }
+            }
+        }
+
+        window.startTrainGame = function() { 
+            // ==================================================================
+            // HIER IST DIE REPARATUR:
+            // Die Funktion `getCardsForTraining` wurde als `window.getCardsForTraining`
+            // definiert, daher muss sie auch mit `window.` aufgerufen werden,
+            // um 100% sicherzustellen, dass sie gefunden wird.
+            // ==================================================================
+            cards = window.getCardsForTraining(); 
+            activeVocab = null; // Aktuelle Karte zurücksetzen
+
+            if (cards.length === 0) {
+                // **NEU: Angepasste Meldung basierend auf der Auswahl**
+                const totalSelected = VOCABULARY_BASE.filter(v => selectedTrainingBoxes.includes(v.box || 1)).length;
+                
+                if (totalSelected === 0) {
+                     frontTextElement.textContent = 'Bitte füge Vokabeln hinzu oder wähle Boxen aus.';
+                } else {
+                     // **REPARATUR: Angepasste Meldung, da Wartezeit entfernt wurde.**
+                     frontTextElement.textContent = 'Keine fälligen Vokabeln in den ausgewählten Boxen! Alle fälligen Boxen wurden bereits trainiert.';
+                }
+
+                backTextElement.textContent = '';
+                startButton.classList.remove('hidden');
+                checkButton.classList.add('hidden');
+                showAnswerButton.classList.add('hidden');
+                nextActions.classList.add('hidden');
+                answerInput.disabled = true;
+                return;
+            }
+
+            currentCardIndex = 0;
+            correctAnswersCount = 0;
+            initialDeckSize = cards.length;
+            
+            // **REPARATUR: Entfernung der Logik zur Markierung von Box 1 als trainiert.**
+            // if (cards.some(v => v.box === 1)) {
+            //     setBoxTrainedDate();
+            // }
+
+            startButton.classList.add('hidden');
+            checkButton.classList.remove('hidden');
+            showAnswerButton.classList.remove('hidden');
+            nextActions.classList.add('hidden');
+            feedbackElement.textContent = '';
+            answerInput.value = '';
+            answerInput.disabled = false;
+            answerInput.focus();
+            cardElement.classList.remove('flipped');
+            
+            // Box-Auswahl während des Trainings deaktivieren
+            boxSelectionContainer.querySelectorAll('input').forEach(input => input.disabled = true);
+            
+            renderBoxStats(); // Box-Statistiken aktualisieren
+            loadCard();
+        }
+        
+        // NEUE HELFERFUNKTION: Setzt die Karte sofort zurück, um die nächste Vokabel zu verdecken
+        function resetCardDisplay() {
+            cardElement.classList.remove('flipped'); // Stellt sicher, dass die Karte vorne ist
+            frontTextElement.textContent = 'Nächste Vokabel wird geladen...'; // Verdeckt den nächsten Begriff
+            backTextElement.textContent = ''; // Verdeckt die Antwort
+            
+            answerInput.value = '';
+            answerInput.disabled = true;
+            checkButton.disabled = true;
+            showAnswerButton.classList.add('hidden'); 
+            nextActions.classList.add('hidden');
+            feedbackElement.textContent = '';
+        }
+
+        function loadCard() {
+            if (currentCardIndex >= cards.length) {
+                endGame();
+                return;
+            }
+
+            activeVocab = cards[currentCardIndex]; // **NEU: Setze activeVocab**
+            
+            currentCardIndexElement.textContent = correctAnswersCount;
+            totalCardsElement.textContent = initialDeckSize;
+            progressBar.style.width = `${(currentCardIndex / initialDeckSize) * 100}%`; 
+
+            // Verzögertes Setzen des Textes:
+            setTimeout(() => {
+                // Zeigt die deutsche Vokabel als Frage
+                frontTextElement.textContent = activeVocab.german; 
+                // Zeigt die englische Vokabel als Antwort
+                backTextElement.textContent = activeVocab.english; 
+                
+                answerInput.disabled = false;
+                checkButton.disabled = false;
+                showAnswerButton.classList.remove('hidden'); 
+                nextActions.classList.add('hidden');
+                feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
+                answerInput.focus();
+            }, 100); // 100ms Verzögerung, um das "Laden" zu simulieren und das Verraten zu verhindern
+        }
+
+        window.checkAnswer = function() {
+            if (!activeVocab) return;
+            
+            const userAnswer = normalizeAnswer(answerInput.value);
+            // Korrekte Antwort ist die englische Vokabel
+            const correctAnswer = normalizeAnswer(activeVocab.english); 
+
+            if (userAnswer === '') {
+                feedbackElement.textContent = 'Bitte gib eine Antwort ein.';
+                return;
+            }
+
+            checkButton.disabled = true;
+            answerInput.disabled = true;
+            showAnswerButton.classList.add('hidden');
+            
+            cardElement.classList.add('flipped'); 
+
+            if (userAnswer === correctAnswer) {
+                feedbackElement.innerHTML = '<span class="text-green-600 font-bold">✅ Korrekt! Gut gemacht.</span>';
+            } else {
+                feedbackElement.innerHTML = '<span class="text-red-600 font-bold">❌ Falsch. Vergleiche deine Antwort mit der richtigen:</span>';
+            }
+            
+            nextActions.classList.remove('hidden');
+        }
+        
+        // **ÄNDERUNG: Diese Funktion implementiert die Kastensystem-Logik**
+        window.processResult = function(isCorrect) {
+            if (!activeVocab) return;
+            
+            const vocabInBase = VOCABULARY_BASE.find(v => v.german === activeVocab.german && v.english === activeVocab.english);
+            
+            if (vocabInBase) {
+                if (isCorrect) {
+                    // **Korrekt: Vokabel in die nächste Box verschieben (max. Box 5)**
+                    vocabInBase.box = Math.min(vocabInBase.box + 1, NUM_BOXES);
+                    correctAnswersCount++; // Zählt als erfolgreich trainiert
+                } else {
+                    // **Falsch: Vokabel zurück in Box 1 verschieben**
+                    vocabInBase.box = 1;
+                }
+                
+                // **WICHTIG: Speichern, da sich der Box-Status im VOCABULARY_BASE geändert hat.**
+                saveVocabulary(); 
+                renderBoxStats(); // Box-Statistiken aktualisieren
+                renderBoxStatsHome(); // Home-Statistiken aktualisieren
+            }
+
+            currentCardIndex++;
+            
+            // **WICHTIG: Verhindere das Anzeigen des neuen deutschen Wortes**
+            resetCardDisplay(); 
+
+            // Nach einer kurzen Verzögerung die nächste Karte laden
+            setTimeout(loadCard, 100); 
+        }
+
+        function endGame() {
+            const totalVocabs = initialDeckSize; 
+            const currentScore = correctAnswersCount; 
+            
+            frontTextElement.textContent = 'Training abgeschlossen!';
+            backTextElement.textContent = `Ergebnis: ${currentScore} von ${totalVocabs} fälligen Vokabeln erfolgreich trainiert.`;
+            
+            feedbackElement.innerHTML = `<span class="text-blue-600 font-bold">Alle fälligen Vokabeln für heute in den ausgewählten Boxen trainiert.</span>`;
+
+            cardElement.classList.remove('flipped');
+            startButton.classList.remove('hidden');
+            checkButton.classList.add('hidden');
+            showAnswerButton.classList.add('hidden');
+            nextActions.classList.add('hidden');
+            answerInput.disabled = true;
+            
+            // Box-Auswahl nach Ende des Trainings wieder aktivieren
+            boxSelectionContainer.querySelectorAll('input').forEach(input => input.disabled = false);
+            
+            progressBar.style.width = '100%';
+            currentCardIndexElement.textContent = currentScore;
+            
+            renderBoxStats(); 
+        }
+        
+        // ----------------------------------------------------------------------
+        // 9. Test View Logic (Unverändert, aber die Daten sind jetzt korrekt)
+        // ----------------------------------------------------------------------
+        window.startTest = function() {
+            if (VOCABULARY_BASE.length < TEST_VOCABULARY_COUNT) {
+                testInfoElement.textContent = `Du benötigst mindestens ${TEST_VOCABULARY_COUNT} Vokabeln, um den Test zu starten. Aktuell: ${VOCABULARY_BASE.length}`;
+                return;
+            }
+
+            testQuestionsContainer.innerHTML = '';
+            testResultsContainer.classList.add('hidden');
+            
+            const shuffledVocab = shuffleArray([...VOCABULARY_BASE]);
+            testQuestions = shuffledVocab.slice(0, TEST_VOCABULARY_COUNT).map(v => ({
+                german: v.german, // Frage: Deutsch
+                english: v.english, // Erwartete Antwort: Englisch
+                userAnswer: '',
+                isCorrect: false
+            }));
+            
+            testQuestions.forEach((q, index) => {
+                const questionHtml = `
+                    <div id="test-q-${index}" class="test-question-item p-4 border-l-4 border-gray-400 bg-white rounded-lg shadow">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">Frage ${index + 1}:</p>
+                        <p class="text-xl font-bold text-gray-900 mb-3">${q.german}</p>
+                        <label for="answer-${index}" class="block text-sm font-medium text-gray-500 mb-1">Englische Übersetzung:</label>
+                        <input type="text" id="answer-${index}" data-index="${index}" placeholder="Deine Antwort eingeben..." class="p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500 test-input" onchange="updateTestAnswer(${index}, this.value)">
+                        <div id="correction-${index}" class="mt-2 text-sm text-red-600 font-medium hidden"></div>
+                    </div>
+                `;
+                testQuestionsContainer.innerHTML += questionHtml;
+            });
+
+            testInfoElement.textContent = `Du machst den Test mit ${TEST_VOCABULARY_COUNT} Vokabeln. Viel Erfolg!`;
+            startTestButton.classList.add('hidden');
+            submitTestButton.classList.remove('hidden');
+        }
+
+        window.updateTestAnswer = function(index, value) {
+            if (testQuestions[index]) {
+                testQuestions[index].userAnswer = value;
+            }
+        }
+
+        window.submitTest = function() {
+            testResults = testQuestions.map((q, index) => {
+                const userAnswer = normalizeAnswer(q.userAnswer);
+                const correctAnswer = normalizeAnswer(q.english); // Prüft gegen Englisch
+                const isCorrect = userAnswer === correctAnswer;
+                
+                const item = document.getElementById(`test-q-${index}`);
+                item.setAttribute('data-status', isCorrect ? 'correct' : (q.userAnswer.trim() === '' ? 'skipped' : 'incorrect'));
+
+                return {
+                    ...q,
+                    userAnswer: q.userAnswer,
+                    isCorrect: isCorrect,
+                    status: isCorrect ? 'correct' : (q.userAnswer.trim() === '' ? 'skipped' : 'incorrect')
+                };
+            });
+            
+            testContainer.classList.add('hidden');
+            testResultsContainer.classList.remove('hidden');
+            
+            renderEditableCorrection();
+            recalculateTestScore();
+        }
+
+        window.setCorrectionStatus = function(index, newStatus) {
+            const question = testResults[index];
+            if (!question) return;
+
+            question.isCorrect = newStatus;
+            
+            const statusElement = document.getElementById(`correction-status-${index}`);
+            
+            if (newStatus) {
+                statusElement.textContent = '✅ Korrekt (Manuell)';
+                statusElement.classList.remove('text-red-600');
+                statusElement.classList.add('text-green-600');
+            } else {
+                statusElement.textContent = '❌ Falsch (Manuell)';
+                statusElement.classList.remove('text-green-600');
+                statusElement.classList.add('text-red-600');
+            }
+
+            recalculateTestScore();
+        }
+
+        function renderEditableCorrection() {
+            testCorrectionContainer.innerHTML = '';
+            
+            testResults.forEach((q, index) => {
+                const isSkipped = q.userAnswer.trim() === '';
+                const statusClass = q.isCorrect ? 'border-green-500 bg-green-50' : (isSkipped ? 'border-yellow-500 bg-yellow-50' : 'border-red-500 bg-red-50');
+                const statusText = q.isCorrect ? '✅ Korrekt' : (isSkipped ? '⚠️ Übersprungen' : '❌ Falsch');
+                const statusColor = q.isCorrect ? 'text-green-600' : 'text-red-600';
+
+                const itemHtml = `
+                    <div class="p-4 rounded-lg shadow-md border-l-4 ${statusClass}">
+                        <p class="text-sm font-medium text-gray-700">Frage ${index + 1}: <span class="text-lg font-bold">${q.german}</span></p>
+                        <p class="text-xs text-gray-500 mt-1">Erwartet: <span class="font-bold text-gray-800">${q.english}</span></p>
+                        <p class="text-xs text-gray-500">Deine Eingabe: <span class="font-bold text-gray-800">${q.userAnswer || '-- Leer --'}</span></p>
+                        
+                        <div class="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
+                            <p id="correction-status-${index}" class="text-sm font-bold ${statusColor}">${statusText}</p>
+                            <div class="space-x-2">
+                                <button class="bg-green-200 hover:bg-green-300 text-green-800 text-xs font-bold py-1 px-3 rounded-full" onclick="setCorrectionStatus(${index}, true)">
+                                    Richtig setzen
+                                </button>
+                                <button class="bg-red-200 hover:bg-red-300 text-red-800 text-xs font-bold py-1 px-3 rounded-full" onclick="setCorrectionStatus(${index}, false)">
+                                    Falsch setzen
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                testCorrectionContainer.innerHTML += itemHtml;
+            });
+        }
+
+        window.recalculateTestScore = function() {
+            const totalQuestions = testResults.length;
+            if (totalQuestions === 0) return;
+            
+            const correctCount = testResults.filter(q => q.isCorrect).length;
+            const incorrectCount = totalQuestions - correctCount;
+            const percentage = (correctCount / totalQuestions);
+            
+            let grade;
+            if (percentage >= 0.92) grade = '1+'; 
+            else if (percentage >= 0.85) grade = '1'; 
+            else if (percentage >= 0.80) grade = '1-';
+            else if (percentage >= 0.75) grade = '2+'; 
+            else if (percentage >= 0.67) grade = '2'; 
+            else if (percentage >= 0.60) grade = '2-'; 
+            else if (percentage >= 0.55) grade = '3+'; 
+            else if (percentage >= 0.50) grade = '3'; 
+            else if (percentage >= 0.45) grade = '3-'; 
+            else if (percentage >= 0.40) grade = '4+'; 
+            else if (percentage >= 0.33) grade = '4'; 
+            else if (percentage >= 0.25) grade = '4-'; 
+            else if (percentage >= 0.15) grade = '5'; 
+            else grade = '6'; 
+
+            resultCorrectElement.textContent = correctCount;
+            resultIncorrectElement.textContent = incorrectCount;
+            resultGradeElement.textContent = grade;
+            
+            let gradeColor = 'red';
+            if (percentage >= 0.85) gradeColor = 'green';
+            else if (percentage >= 0.50) gradeColor = 'yellow';
+            else if (percentage >= 0.33) gradeColor = 'orange';
+
+            testResultsContainer.classList.remove('border-red-500', 'border-green-500', 'border-yellow-500', 'border-orange-500');
+            testResultsContainer.classList.add(`border-${gradeColor}-500`);
+            testResultsContainer.classList.remove('bg-red-50', 'bg-green-50', 'bg-yellow-50', 'bg-orange-50');
+            testResultsContainer.classList.add(`bg-${gradeColor}-50`);
+            
+            resultGradeElement.classList.remove('text-red-900', 'text-green-900', 'text-yellow-900', 'text-orange-900');
+            resultGradeElement.classList.add(`text-${gradeColor}-900`);
+        }
+        
+        // ----------------------------------------------------------------------
+        // 10. Games View Logic (Unverändert, aber die Daten sind jetzt korrekt)
+        // ----------------------------------------------------------------------
+
+        window.startGame = function(gameType) {
+             matchItContainer.classList.add('hidden');
+             hangmanContainer.classList.add('hidden');
+             quizTimeContainer.classList.add('hidden'); 
+             fillInBlankContainer.classList.add('hidden'); 
+             
+             document.querySelectorAll('#games-view button[id^="start-"]').forEach(btn => {
+                 btn.disabled = false;
+             });
+             const startButton = document.getElementById(`start-${gameType}`);
+             if (startButton) {
+                 startButton.disabled = true;
+             }
+             
+             if (gameType === 'match-it') {
+                 matchItContainer.classList.remove('hidden');
+                 initMatchItGame();
+             } else if (gameType === 'hangman') {
+                 hangmanContainer.classList.remove('hidden');
+                 initHangmanGame();
+             } else if (gameType === 'quiz-time') { 
+                 quizTimeContainer.classList.remove('hidden');
+                 initQuizTimeGame();
+             } else if (gameType === 'fill-in-blank') { 
+                 fillInBlankContainer.classList.remove('hidden');
+                 initFillInBlankGame();
+             }
+        }
+        
+        // --- Match It! Game (Zuordnungsspiel) ---
+        function initMatchItGame() {
+            if (VOCABULARY_BASE.length < 4) {
+                matchStatus.innerHTML = '<span class="text-red-600">❌ Füge mindestens 4 Vokabeln hinzu, um das Spiel zu spielen!</span>';
+                document.getElementById('start-match-it').disabled = false;
+                return;
+            }
+
+            matchCardsContainer.innerHTML = '';
+            matchStatus.textContent = 'Finde die passenden Paare!';
+            selectedMatchCard = null;
+            matchesFound = 0;
+            
+            const subset = shuffleArray([...VOCABULARY_BASE]).slice(0, 4);
+            matchCardsData = [];
+            
+            subset.forEach((vocab, index) => {
+                // Deutsche Karte
+                matchCardsData.push({ id: index, term: vocab.german, type: 'german' }); 
+                // Englische Karte
+                matchCardsData.push({ id: index, term: vocab.english, type: 'english' }); 
+            });
+
+            matchCardsData = shuffleArray(matchCardsData);
+            
+            matchCardsData.forEach((card, index) => {
+                const cardElement = document.createElement('div');
+                cardElement.classList.add('match-card', card.type === 'german' ? 'match-card-german' : 'match-card-english');
+                cardElement.textContent = card.term;
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.index = index;
+                cardElement.onclick = () => handleMatchCardClick(cardElement, card.id, index);
+                matchCardsContainer.appendChild(cardElement);
+            });
+        }
+
+        function handleMatchCardClick(element, id, index) {
+            if (element.classList.contains('matched')) return;
+
+            if (selectedMatchCard) {
+                if (selectedMatchCard.index === index) {
+                    element.classList.remove('selected');
+                    selectedMatchCard = null;
+                    return;
+                }
+                
+                element.classList.add('selected');
+
+                if (selectedMatchCard.id === id) {
+                    matchesFound++;
+                    matchStatus.innerHTML = `<span class="text-green-600 font-bold">🎉 Match gefunden! (${matchesFound}/4)</span>`;
+                    
+                    document.querySelectorAll(`.match-card[data-id="${id}"]`).forEach(card => {
+                        card.classList.remove('selected');
+                        card.classList.add('matched');
+                    });
+                    
+                    if (matchesFound === 4) {
+                        matchStatus.innerHTML = '<span class="text-green-800 font-bold text-lg">🏆 GEWONNEN! Alle Paare gefunden!</span>';
+                        document.getElementById('start-match-it').disabled = false;
+                    }
+                } else {
+                    matchStatus.innerHTML = '<span class="text-red-600 font-bold">❌ Kein Match. Versuch es nochmal.</span>';
+                    
+                    setTimeout(() => {
+                        element.classList.remove('selected');
+                        document.querySelector(`.match-card[data-index="${selectedMatchCard.index}"]`).classList.remove('selected');
+                    }, 500);
+                }
+                selectedMatchCard = null;
+                
+            } else {
+                element.classList.add('selected');
+                selectedMatchCard = { id: id, index: index };
+                matchStatus.textContent = 'Wähle die passende Übersetzung...';
+            }
+        }
+
+
+        // --- Hangman Game (Galgenraten) ---
+        const KEYBOARD = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        function initHangmanGame() {
+            if (VOCABULARY_BASE.length === 0) {
+                hangmanStatus.innerHTML = '<span class="text-red-600">❌ Bitte füge Vokabeln hinzu, um Hangman zu spielen!</span>';
+                document.getElementById('start-hangman').disabled = false;
+                return;
+            }
+            
+            hangmanStatus.textContent = '';
+            mistakes = 0;
+            guessedLetters = [];
+            hangmanMistakes.textContent = mistakes;
+            
+            const randomVocab = shuffleArray([...VOCABULARY_BASE])[0];
+            // Hinweis ist Deutsch
+            hangmanHint = randomVocab.german; 
+            // Zu erratendes Wort ist Englisch
+            hangmanWord = normalizeAnswer(randomVocab.english); 
+            
+            hangmanGerman.textContent = hangmanHint;
+            
+            renderHangmanWord();
+            renderHangmanKeyboard();
+        }
+
+        function renderHangmanWord() {
+            hangmanWordElement.innerHTML = '';
+            let isWordGuessed = true;
+            
+            for (const char of hangmanWord) {
+                const span = document.createElement('span');
+                
+                if (KEYBOARD.includes(char.toUpperCase()) && !guessedLetters.includes(char.toLowerCase())) {
+                    span.textContent = '';
+                    isWordGuessed = false;
+                } else if (char === ' ') {
+                    span.textContent = '/';
+                    span.style.borderBottom = 'none';
+                } else if (char === "'") {
+                    span.textContent = "'"; 
+                    span.style.borderBottom = 'none';
+                } else {
+                    span.textContent = char.toUpperCase();
+                }
+                hangmanWordElement.appendChild(span);
+            }
+            
+            if (isWordGuessed && hangmanWord.length > 0) {
+                endHangmanGame(true);
+            }
+        }
+
+        function renderHangmanKeyboard() {
+            hangmanKeyboard.innerHTML = '';
+            for (const char of KEYBOARD) {
+                const button = document.createElement('button');
+                button.textContent = char;
+                button.classList.add('bg-indigo-300', 'hover:bg-indigo-400', 'text-indigo-900');
+                
+                if (guessedLetters.includes(char.toLowerCase())) {
+                    button.disabled = true;
+                    if (hangmanWord.includes(char.toLowerCase())) {
+                        button.classList.remove('bg-indigo-300', 'hover:bg-indigo-400');
+                        button.classList.add('bg-green-400');
+                    } else {
+                        button.classList.remove('bg-indigo-300', 'hover:bg-indigo-400');
+                        button.classList.add('bg-red-400');
+                    }
+                } else {
+                    button.onclick = () => handleHangmanGuess(char.toLowerCase(), button);
+                }
+                
+                hangmanKeyboard.appendChild(button);
+            }
+        }
+
+        window.handleHangmanGuess = function(letter, button) {
+            if (guessedLetters.includes(letter)) return;
+            
+            guessedLetters.push(letter);
+            button.disabled = true;
+
+            if (hangmanWord.includes(letter)) {
+                button.classList.remove('bg-indigo-300', 'hover:bg-indigo-400');
+                button.classList.add('bg-green-400');
+                renderHangmanWord();
+                hangmanStatus.textContent = 'Toll! Richtig geraten.';
+            } else {
+                button.classList.remove('bg-indigo-300', 'hover:bg-indigo-400');
+                button.classList.add('bg-red-400');
+                mistakes++;
+                hangmanMistakes.textContent = mistakes;
+                hangmanStatus.textContent = 'Falsch. Ein Versuch weniger.';
+            }
+            
+            if (mistakes >= maxMistakes) {
+                endHangmanGame(false);
+            }
+        }
+
+        function endHangmanGame(won) {
+            if (won) {
+                hangmanStatus.innerHTML = '<span class="text-green-800 font-bold text-lg">🏆 GEWONNEN! Du hast das Wort erraten!</span>';
+            } else {
+                hangmanStatus.innerHTML = `<span class="text-red-800 font-bold text-lg">💀 VERLOREN! Das Wort war: ${hangmanWord.toUpperCase()}</span>`;
+            }
+            
+            hangmanKeyboard.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            document.getElementById('start-hangman').disabled = false;
+        }
+        
+        // --- Quiz Time! Game (Multiple Choice) ---
+
+        function initQuizTimeGame() {
+            if (VOCABULARY_BASE.length < 4) {
+                quizStatus.innerHTML = '<span class="text-red-600">❌ Füge mindestens 4 Vokabeln hinzu, um das Quiz zu spielen!</span>';
+                document.getElementById('start-quiz-time').disabled = false;
+                return;
+            }
+            
+            quizResultsContainer.classList.add('hidden');
+            quizNextButton.classList.add('hidden');
+            quizCurrentQuestionIndex = 0;
+            quizScore = 0;
+
+            quizQuestions = shuffleArray([...VOCABULARY_BASE]);
+            quizQuestions = quizQuestions.slice(0, QUIZ_COUNT); 
+            
+            quizQuestions.forEach(q => q.options = generateQuizOptions(q));
+            
+            loadNextQuizQuestion();
+        }
+
+        function generateQuizOptions(correctVocab) {
+            const allIncorrect = VOCABULARY_BASE.filter(v => normalizeAnswer(v.english) !== normalizeAnswer(correctVocab.english));
+            
+            const incorrectOptions = shuffleArray(allIncorrect).slice(0, 3).map(v => v.english);
+            
+            let options = [...incorrectOptions, correctVocab.english];
+            
+            return shuffleArray(options);
+        }
+
+        window.loadNextQuizQuestion = function() {
+            quizStatus.textContent = '';
+            quizNextButton.classList.add('hidden');
+            quizOptionsContainer.innerHTML = '';
+            
+            if (quizCurrentQuestionIndex >= quizQuestions.length) {
+                showQuizResults();
+                return;
+            }
+            
+            const currentQuestion = quizQuestions[quizCurrentQuestionIndex];
+            
+            quizCurrentQuestionElement.textContent = quizCurrentQuestionIndex + 1;
+            // Frage: Deutsch
+            quizGermanTerm.textContent = currentQuestion.german; 
+
+            currentQuestion.options.forEach(option => {
+                const button = document.createElement('button');
+                button.classList.add('mc-option', 'w-full', 'text-left');
+                button.textContent = option;
+                button.onclick = () => handleQuizAnswer(button, option, currentQuestion.english);
+                quizOptionsContainer.appendChild(button);
+            });
+        }
+
+        window.handleQuizAnswer = function(selectedElement, selectedAnswer, correctAnswer) {
+            
+            document.querySelectorAll('.mc-option').forEach(btn => btn.style.pointerEvents = 'none');
+            
+            let isCorrect = (normalizeAnswer(selectedAnswer) === normalizeAnswer(correctAnswer));
+            
+            if (isCorrect) {
+                selectedElement.classList.add('correct');
+                quizStatus.innerHTML = '<span class="text-green-600 font-bold">✅ Korrekt!</span>';
+                quizScore++;
+            } else {
+                selectedElement.classList.add('incorrect');
+                quizStatus.innerHTML = `<span class="text-red-600 font-bold">❌ Falsch!</span>`;
+                
+                document.querySelectorAll('.mc-option').forEach(btn => {
+                    if (normalizeAnswer(btn.textContent) === normalizeAnswer(correctAnswer)) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            quizNextButton.classList.remove('hidden');
+
+            quizCurrentQuestionIndex++;
+        }
+        
+        function showQuizResults() {
+             quizTimeContainer.classList.add('hidden');
+             quizResultsContainer.classList.remove('hidden');
+             quizScoreElement.textContent = quizScore;
+             document.getElementById('start-quiz-time').disabled = false;
+        }
+
+        // --- Fill-in-the-Blank Game (Lückenfüller) ---
+
+        function initFillInBlankGame() {
+            const validVocabs = VOCABULARY_BASE.filter(v => v.example && v.example.includes('[VOCAB]')); 
+
+            if (validVocabs.length < FIB_COUNT) {
+                fibStatus.innerHTML = `<span class="text-red-600">❌ Füge mindestens ${FIB_COUNT} Vokabeln mit Beispielsätzen hinzu, um das Spiel zu starten!</span>`;
+                document.getElementById('start-fill-in-blank').disabled = false;
+                return;
+            }
+
+            fibResultsContainer.classList.add('hidden');
+            fibCurrentQuestionIndex = 0;
+            fibScore = 0;
+            
+            fibQuestions = shuffleArray([...validVocabs]).slice(0, FIB_COUNT);
+            
+            loadNextFillInBlankQuestion();
+        }
+
+        window.loadNextFillInBlankQuestion = function() {
+            fibStatus.textContent = '';
+            fibAnswerInput.value = '';
+            fibAnswerInput.disabled = false;
+            fibCheckButton.classList.remove('hidden');
+            fibNextButton.classList.add('hidden');
+            
+            fibSentence.classList.remove('text-left');
+            fibSentence.classList.add('text-center');
+            fibSentence.innerHTML = '';
+            
+            fibAnswerInput.focus();
+
+            if (fibCurrentQuestionIndex >= fibQuestions.length) {
+                showFibResults();
+                return;
+            }
+            
+            const currentQuestion = fibQuestions[fibCurrentQuestionIndex];
+            
+            fibCurrentQuestionElement.textContent = fibCurrentQuestionIndex + 1;
+            // Deutscher Begriff als Hinweis für die Lücke
+            fibGermanTerm.textContent = currentQuestion.german; 
+            
+            const sentenceWithBlank = currentQuestion.example.replace('[VOCAB]', '_____');
+            fibSentence.textContent = sentenceWithBlank;
+        }
+
+        window.checkFillInBlankAnswer = function() {
+            const currentQuestion = fibQuestions[fibCurrentQuestionIndex];
+            const userAnswer = normalizeAnswer(fibAnswerInput.value);
+            // Korrekte Antwort ist der englische Begriff
+            const correctAnswer = normalizeAnswer(currentQuestion.english); 
+            
+            fibAnswerInput.disabled = true;
+            fibCheckButton.classList.add('hidden');
+            fibNextButton.classList.remove('hidden');
+
+            fibSentence.classList.remove('text-center');
+            fibSentence.classList.add('text-left');
+
+            if (userAnswer === correctAnswer) {
+                fibStatus.innerHTML = '<span class="text-green-600 font-bold">✅ Korrekt!</span>';
+                fibSentence.innerHTML = currentQuestion.example.replace('[VOCAB]', `<span class="font-extrabold text-green-600">${currentQuestion.english}</span>`);
+                fibScore++;
+            } else {
+                fibStatus.innerHTML = `<span class="text-red-600 font-bold">❌ Falsch! Korrekt wäre: ${currentQuestion.english}</span>`;
+                fibSentence.innerHTML = currentQuestion.example.replace('[VOCAB]', `<span class="font-extrabold text-red-600 underline">${currentQuestion.english}</span>`);
+            }
+
+            fibCurrentQuestionIndex++;
+        }
+
+        function showFibResults() {
+            fillInBlankContainer.classList.add('hidden');
+            fibResultsContainer.classList.remove('hidden');
+            fibScoreElement.textContent = fibScore;
+            document.getElementById('start-fill-in-blank').disabled = false;
+        }
+        
+        // ----------------------------------------------------------------------
+        // 11. Initialisierung
+        // ----------------------------------------------------------------------
+
+        window.onload = function() {
+            loadVocabulary(); // Vokabeln aus dem Local Storage laden
+            initialDeckSize = VOCABULARY_BASE.length;
+            totalCardsElement.textContent = initialDeckSize;
+            
+            showView('home'); 
+        }
+    </script>
+
+</body>
+</html>
