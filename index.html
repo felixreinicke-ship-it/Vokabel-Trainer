@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vokabeltrainer V19.0 (Speichern & Manuelle Eingabe)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
         body {
@@ -217,29 +218,46 @@
             <div class="p-8 bg-white rounded-xl shadow-2xl text-center">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Wähle dein Lernmodul</h2>
                 <div class="space-y-4">
-                    <button class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('games')">
-                        🎮 Vokabel Spiele
-                    </button>
                     <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('train')">
-                        Vokabeln lernen (Karteikarten)
+                        🧠 Vokabeln lernen (Karteikarten)
                     </button>
                     <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('list')">
-                        Vokabelliste anzeigen (Alle)
+                        📚 Vokabelliste anzeigen (Alle)
                     </button>
                     <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('test')">
                         📝 Vokabel-Test (15 Fragen)
                     </button>
+                    <button class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('games')">
+                        🎮 Vokabel Spiele
+                    </button>
                     <button class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('manage')">
                         ⚙️ Vokabeln hinzufügen & verwalten
+                    </button>
+                    <button class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('settings')">
+                        ⚡ Einstellungen
                     </button>
                 </div>
             </div>
             
             <div class="mt-8 p-6 bg-white rounded-xl shadow-2xl">
-                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center border-b pb-3">📦 Dein Lernfortschritt (Kasten-Übersicht)</h2>
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h2 class="text-2xl font-bold text-gray-800">📦 Dein Lernfortschritt</h2>
+                    <div class="text-center">
+                        <p class="text-3xl font-extrabold" id="streak-display">🔥 0</p>
+                        <p class="text-xs text-gray-600 mt-1">Tage Streak</p>
+                    </div>
+                </div>
                 <div id="box-stats-home" class="space-y-4">
                     </div>
                 <p class="mt-4 text-sm text-gray-500 text-center">Klicken Sie auf einen Kasten, um alle darin enthaltenen Vokabeln zu sehen.</p>
+            </div>
+
+            <div class="mt-8 p-6 bg-white rounded-xl shadow-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 text-center border-b pb-3">📈 Dein Lernverlauf</h2>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="progressChart"></canvas>
+                </div>
+                <p class="mt-4 text-sm text-gray-600 text-center">Zeigt deine täglichen Vokabel-Trainings über die Zeit</p>
             </div>
         </div>
         
@@ -455,6 +473,57 @@
                 </div>
             </div>
             
+        </div>
+
+        <div id="edit-vocab-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">✏️ Vokabel bearbeiten</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Deutsch:</label>
+                        <input type="text" id="edit-german-input" class="p-2 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Englisch:</label>
+                        <input type="text" id="edit-english-input" class="p-2 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Beispielsatz (optional):</label>
+                        <input type="text" id="edit-example-input" class="p-2 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex gap-3 pt-4">
+                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg" onclick="saveEditedVocab()">💾 Speichern</button>
+                        <button class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg" onclick="closeEditVocabModal()">❌ Abbrechen</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">⚡ Einstellungen</h2>
+            
+            <div class="space-y-6">
+                <div class="p-6 bg-red-50 rounded-xl border-4 border-red-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-red-700 mb-3">🗑️ Datenbank zurücksetzen</h3>
+                    <p class="text-gray-700 mb-4">Löschen Sie alle Ihre Vokabeln und Lernfortschritte. Diese Aktion kann NICHT rückgängig gemacht werden!</p>
+                    <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="confirmClearDatabase()">
+                        🗑️ Alle Daten löschen (Neustart)
+                    </button>
+                </div>
+
+                <div class="p-6 bg-blue-50 rounded-xl border-4 border-blue-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-blue-700 mb-3">📊 Lernstatistiken</h3>
+                    <div id="stats-summary" class="text-gray-700">
+                        <p><strong>Gesamtzahl Vokabeln:</strong> <span id="total-vocabs">0</span></p>
+                        <p><strong>Letztes Training:</strong> <span id="last-trained">Noch nicht trainiert</span></p>
+                        <p><strong>Trainingssitzungen:</strong> <span id="training-sessions">0</span></p>
+                    </div>
+                </div>
+
+                <button class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95" onclick="showView('home')">
+                    ← Zurück zur Startseite
+                </button>
+            </div>
         </div>
 
         <div id="games-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
@@ -687,6 +756,10 @@
         const STORAGE_KEY = 'vokabeltrainer_v19_vocab';
         // **NEU: Speichert die Auswahl der Boxen für das Training**
         const SELECTED_BOXES_KEY = 'vokabeltrainer_v19_selected_boxes';
+        // Progress tracking key
+        const PROGRESS_KEY = 'vokabeltrainer_v19_progress';
+        const TRAINING_SESSIONS_KEY = 'vokabeltrainer_v19_sessions';
+        const LAST_TRAINED_KEY = 'vokabeltrainer_v19_last_trained';
         
         // **ENTFERNT: BOX_TRAIN_DATE_KEY - DIESE KONSTANTE WIRD NICHT MEHR BENÖTIGT.**
 
@@ -916,6 +989,13 @@
             if (viewId === 'home') {
                  // **NEU: Render Box Stats für die Home-Seite**
                 renderBoxStatsHome();
+                // **NEU: Render Progress Chart**
+                renderProgressChart();
+                // **NEU: Update Streak Display**
+                updateStreakDisplay();
+            } else if (viewId === 'settings') {
+                // **NEU: Update Settings Stats beim Öffnen**
+                updateSettingsStats();
             } else if (viewId === 'list') {
                 // **FilterBox-Parameter an renderVocabularyList übergeben**
                 renderVocabularyList(filterBox);
@@ -1341,12 +1421,20 @@
                 cellBox.textContent = `Box ${card.box}`;
                 
                 let cellAction = row.insertCell();
-                cellAction.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium');
+                cellAction.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-right', 'text-sm', 'font-medium', 'space-x-2');
+                
+                // Edit-Button
+                const editButton = document.createElement('button');
+                editButton.textContent = '✏️ Bearbeiten';
+                editButton.classList.add('text-blue-600', 'hover:text-blue-900', 'transition-colors', 'font-bold', 'mr-2');
+                editButton.onclick = () => openEditVocabModal(card);
+                cellAction.appendChild(editButton);
+                
+                // Delete-Button
                 const deleteButton = document.createElement('button');
                 deleteButton.textContent = '🗑️ Löschen';
                 deleteButton.classList.add('text-red-600', 'hover:text-red-900', 'transition-colors', 'font-bold');
-                // Index wird verwendet, da die Liste sortiert ist
-                deleteButton.onclick = () => deleteVocabularyItem(card); // **ÄNDERUNG: Übergibt das Vokabel-Objekt**
+                deleteButton.onclick = () => deleteVocabularyItem(card);
                 cellAction.appendChild(deleteButton);
             });
             
@@ -1423,56 +1511,20 @@
              renderBoxStats(); // Update die Box-Stats im Train-View
         }
         
-        // **REPARIERTE FUNKTION: Die 24-Stunden-Sperre für Box 1 wurde entfernt.**
+        // **REPARIERTE FUNKTION: Jede Box kann jederzeit trainiert werden - KEINE WARTEZEIT**
         window.getCardsForTraining = function() { // **FIX: Funktion global definieren (window.)**
             if (selectedTrainingBoxes.length === 0) {
                  return [];
             }
             
-            const today = new Date().toDateString();
-            const dayOfMonth = new Date().getDate();
-
+            // Einfacher Filter: Nur die ausgewählten Boxen, KEINE zeitlichen Einschränkungen
             const cardsToReview = VOCABULARY_BASE.filter(v => {
-                const box = v.box || 1; 
-                
-                // 1. Filter: Ist die Box ausgewählt?
-                if (!selectedTrainingBoxes.includes(box)) {
-                     return false;
-                }
-
-                // 2. Filter: Ist die Karte heute fällig?
-                // Box 1: JETZT IMMER FÄLLIG (KEINE WARTELOGIK MEHR)
-                if (box === 1) {
-                    return true; // **REPARATUR: Immer fällig!**
-                } 
-                // Box 2: Jede Karte in Box 2
-                else if (box === 2) {
-                    return true;
-                }
-                // Box 3: Jeden 2. Tag (ungerade Tage: 1, 3, 5, ...)
-                else if (box === 3) {
-                    return dayOfMonth % 2 !== 0; 
-                }
-                // Box 4: Jeden 4. Tag (z.B. 1, 5, 9, 13, ...)
-                else if (box === 4) {
-                    return dayOfMonth % 4 === 1; 
-                }
-                // Box 5 (Mastered): Jeden 8. Tag (z.B. 1, 9, 17, 25, ...)
-                else if (box === 5) {
-                    return dayOfMonth % 8 === 1; 
-                }
-                // Fallback für zukünftige Boxen oder Fehler
-                return false; 
+                const box = v.box || 1;
+                return selectedTrainingBoxes.includes(box);
             });
             
-            // Box 1 Karten werden ganz am Anfang des Trainings einmalig abgefragt.
-            const box1Cards = cardsToReview.filter(v => v.box === 1);
-            
-            // Die restlichen Boxen werden gemischt (Box 2, 3, 4, 5)
-            const otherCards = shuffleArray(cardsToReview.filter(v => v.box > 1));
-            
-            // Mische alle fälligen Karten und die ausgewählten Boxen
-            return shuffleArray([...box1Cards, ...otherCards]);
+            // Mische alle Karten und gib sie zurück
+            return shuffleArray(cardsToReview);
         }
         
         // **NEUE FUNKTION: Rendert die Box-Statistiken auf der Home-Seite**
@@ -1484,24 +1536,34 @@
             
             boxStatsHomeElement.innerHTML = '';
 
+            const boxDescriptions = {
+                1: "🔴 Noch nicht gelernt",
+                2: "🟡 Anfänger",
+                3: "🟠 Fortgeschritten",
+                4: "🟢 Sehr gut",
+                5: "⭐ Mastered"
+            };
+
             for (let i = 1; i <= NUM_BOXES; i++) {
                 let colorClass = 'bg-gray-200';
                 let borderColor = 'border-gray-400';
                 if (i === 1) { colorClass = 'bg-red-100'; borderColor = 'border-red-400'; }
                 else if (i === NUM_BOXES) { colorClass = 'bg-green-100'; borderColor = 'border-green-400'; }
                 else if (i === 2) { colorClass = 'bg-yellow-100'; borderColor = 'border-yellow-400'; }
-                else if (i === 3) { colorClass = 'bg-blue-100'; borderColor = 'border-blue-400'; }
-                else if (i === 4) { colorClass = 'bg-indigo-100'; borderColor = 'border-indigo-400'; }
+                else if (i === 3) { colorClass = 'bg-orange-100'; borderColor = 'border-orange-400'; }
+                else if (i === 4) { colorClass = 'bg-blue-100'; borderColor = 'border-blue-400'; }
 
 
                 const cardHtml = `
                     <div class="p-4 ${colorClass} rounded-xl shadow-md border-2 ${borderColor} cursor-pointer hover:shadow-lg transition-shadow duration-150" 
                          onclick="showBoxVocabularyList(${i})">
                         <div class="flex justify-between items-center">
-                            <h3 class="text-xl font-bold text-gray-800">Kasten ${i}</h3>
-                            <span class="text-2xl font-extrabold text-gray-900">${boxCounts[i]}</span>
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-800">Kasten ${i}</h3>
+                                <p class="text-sm text-gray-600 mt-1">${boxDescriptions[i]}</p>
+                            </div>
+                            <span class="text-3xl font-extrabold text-gray-900">${boxCounts[i]}</span>
                         </div>
-                        <p class="text-sm text-gray-600 mt-1">Vokabeln</p>
                     </div>
                 `;
                 boxStatsHomeElement.innerHTML += cardHtml;
@@ -1754,6 +1816,9 @@
             
             progressBar.style.width = '100%';
             currentCardIndexElement.textContent = currentScore;
+            
+            // **NEU: Trainings-Session aufzeichnen**
+            recordTrainingSession();
             
             renderBoxStats(); 
         }
@@ -2313,6 +2378,293 @@
             fibResultsContainer.classList.remove('hidden');
             fibScoreElement.textContent = fibScore;
             document.getElementById('start-fill-in-blank').disabled = false;
+        }
+        
+        // ----------------------------------------------------------------------
+        // 10.5 Settings & Progress Tracking
+        // ----------------------------------------------------------------------
+
+        function recordTrainingSession() {
+            try {
+                const sessions = parseInt(localStorage.getItem(TRAINING_SESSIONS_KEY) || '0');
+                localStorage.setItem(TRAINING_SESSIONS_KEY, (sessions + 1).toString());
+                localStorage.setItem(LAST_TRAINED_KEY, new Date().toLocaleDateString('de-DE'));
+                
+                // Progress tracking
+                let progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]');
+                const today = new Date().toISOString().split('T')[0];
+                
+                // Überprüfe, ob heute schon ein Eintrag existiert
+                const todayEntry = progress.find(p => p.date === today);
+                if (todayEntry) {
+                    todayEntry.sessions++;
+                    todayEntry.vocabs = correctAnswersCount;
+                } else {
+                    progress.push({
+                        date: today,
+                        sessions: 1,
+                        vocabs: correctAnswersCount
+                    });
+                }
+                
+                localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+            } catch (e) {
+                console.error('Fehler beim Speichern der Trainingsstatistiken:', e);
+            }
+        }
+
+        function updateSettingsStats() {
+            try {
+                const totalVocabs = document.getElementById('total-vocabs');
+                const lastTrained = document.getElementById('last-trained');
+                const sessions = document.getElementById('training-sessions');
+                
+                if (totalVocabs) totalVocabs.textContent = VOCABULARY_BASE.length;
+                
+                const lastDate = localStorage.getItem(LAST_TRAINED_KEY);
+                if (lastTrained) {
+                    lastTrained.textContent = lastDate ? lastDate : 'Noch nicht trainiert';
+                }
+                
+                const sessionCount = localStorage.getItem(TRAINING_SESSIONS_KEY);
+                if (sessions) sessions.textContent = sessionCount || '0';
+            } catch (e) {
+                console.error('Fehler beim Aktualisieren der Statistiken:', e);
+            }
+        }
+
+        // **NEUE FUNKTION: Rendert das Progress-Chart**
+        function renderProgressChart() {
+            try {
+                let progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]');
+                
+                if (progress.length === 0) {
+                    const ctx = document.getElementById('progressChart');
+                    if (ctx) {
+                        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
+                        const parentDiv = ctx.parentElement;
+                        parentDiv.innerHTML = '<p class="text-center text-gray-500 py-12">Keine Daten vorhanden. Starten Sie mit dem Training!</p>';
+                    }
+                    return;
+                }
+
+                // Sortiere nach Datum
+                progress.sort((a, b) => new Date(a.date) - new Date(b.date));
+                
+                // Nimm die letzten 30 Einträge
+                progress = progress.slice(-30);
+                
+                const dates = progress.map(p => {
+                    const date = new Date(p.date);
+                    return date.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' });
+                });
+                
+                const vocabCounts = progress.map(p => p.vocabs || 0);
+                const sessionCounts = progress.map(p => p.sessions || 1);
+
+                const ctx = document.getElementById('progressChart');
+                if (!ctx) return;
+
+                // Zerstöre altes Chart, falls vorhanden
+                if (window.progressChartInstance) {
+                    window.progressChartInstance.destroy();
+                }
+
+                window.progressChartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Gelernte Vokabeln pro Tag',
+                                data: vocabCounts,
+                                borderColor: '#3b82f6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4,
+                                pointRadius: 5,
+                                pointBackgroundColor: '#3b82f6',
+                                pointBorderColor: '#fff',
+                                pointBorderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { size: 12 },
+                                    color: '#374151'
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    color: '#6b7280',
+                                    font: { size: 12 }
+                                },
+                                grid: {
+                                    color: '#e5e7eb'
+                                }
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#6b7280',
+                                    font: { size: 11 }
+                                },
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            } catch (e) {
+                console.error('Fehler beim Rendern des Progress-Charts:', e);
+            }
+        }
+
+        // **NEUE FUNKTION: Berechnet den aktuellen Streak**
+        function calculateStreak() {
+            try {
+                let progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]');
+                
+                if (progress.length === 0) return 0;
+                
+                // Sortiere nach Datum (neueste zuerst)
+                progress.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                const today = new Date().toISOString().split('T')[0];
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                
+                // Prüfe, ob heute oder gestern trainiert wurde
+                if (progress[0].date !== today && progress[0].date !== yesterday) {
+                    return 0; // Streak unterbrochen
+                }
+                
+                // Zähle aufeinanderfolgende Tage
+                let streak = 0;
+                let currentDate = new Date();
+                
+                for (let i = 0; i < 365; i++) {
+                    const dateStr = currentDate.toISOString().split('T')[0];
+                    const hasEntry = progress.some(p => p.date === dateStr);
+                    
+                    if (hasEntry) {
+                        streak++;
+                        currentDate.setDate(currentDate.getDate() - 1);
+                    } else {
+                        break;
+                    }
+                }
+                
+                return streak;
+            } catch (e) {
+                console.error('Fehler beim Berechnen des Streaks:', e);
+                return 0;
+            }
+        }
+
+        // **NEUE FUNKTION: Aktualisiert die Streak-Anzeige**
+        function updateStreakDisplay() {
+            const streak = calculateStreak();
+            const streakElement = document.getElementById('streak-display');
+            if (streakElement) {
+                streakElement.textContent = `🔥 ${streak}`;
+            }
+        }
+
+        // **NEUE FUNKTION: Öffnet das Edit-Modal**
+        let currentEditingVocab = null;
+        window.openEditVocabModal = function(vocabCard) {
+            currentEditingVocab = vocabCard;
+            document.getElementById('edit-german-input').value = vocabCard.german;
+            document.getElementById('edit-english-input').value = vocabCard.english;
+            document.getElementById('edit-example-input').value = vocabCard.example || '';
+            document.getElementById('edit-vocab-modal').classList.remove('hidden');
+        }
+
+        // **NEUE FUNKTION: Schließt das Edit-Modal**
+        window.closeEditVocabModal = function() {
+            document.getElementById('edit-vocab-modal').classList.add('hidden');
+            currentEditingVocab = null;
+        }
+
+        // **NEUE FUNKTION: Speichert die bearbeitete Vokabel**
+        window.saveEditedVocab = function() {
+            if (!currentEditingVocab) return;
+            
+            const newGerman = document.getElementById('edit-german-input').value.trim();
+            const newEnglish = document.getElementById('edit-english-input').value.trim();
+            const newExample = document.getElementById('edit-example-input').value.trim();
+            
+            if (!newGerman || !newEnglish) {
+                alert('❌ Deutsch und Englisch müssen ausgefüllt sein!');
+                return;
+            }
+            
+            // Finde die Vokabel im VOCABULARY_BASE
+            const vocabIndex = VOCABULARY_BASE.findIndex(v => 
+                v.german === currentEditingVocab.german && v.english === currentEditingVocab.english
+            );
+            
+            if (vocabIndex > -1) {
+                // Update die Vokabel
+                VOCABULARY_BASE[vocabIndex].german = newGerman;
+                VOCABULARY_BASE[vocabIndex].english = newEnglish;
+                VOCABULARY_BASE[vocabIndex].example = newExample || `You need to learn the English word for "${newGerman}". The correct word is [VOCAB].`;
+                
+                saveVocabulary();
+                renderBoxStats();
+                renderBoxStatsHome();
+                
+                // Refresh die Liste
+                const filterBox = null;
+                renderVocabularyList(filterBox);
+                
+                closeEditVocabModal();
+                alert('✅ Vokabel erfolgreich aktualisiert!');
+            }
+        }
+
+        window.confirmClearDatabase = function() {
+            const confirmed = confirm(
+                '⚠️ WARNUNG: Alle Ihre Vokabeln und Lernfortschritte werden gelöscht!\n\n' +
+                'Dies kann NICHT rückgängig gemacht werden.\n\n' +
+                'Möchten Sie fortfahren?'
+            );
+            
+            if (confirmed) {
+                const doubleConfirm = confirm('Sind Sie wirklich sicher? Geben Sie "JA" ein zum Bestätigen:\n\nTypen Sie: JA');
+                if (doubleConfirm) {
+                    clearDatabase();
+                }
+            }
+        }
+
+        function clearDatabase() {
+            try {
+                // Lösche alle relevanten Keys
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(SELECTED_BOXES_KEY);
+                localStorage.removeItem(PROGRESS_KEY);
+                localStorage.removeItem(TRAINING_SESSIONS_KEY);
+                localStorage.removeItem(LAST_TRAINED_KEY);
+                localStorage.removeItem(DIRECTION_KEY);
+                
+                // Reload die Seite
+                alert('✅ Datenbank erfolgreich gelöscht! Die Seite wird neu geladen.');
+                location.reload();
+            } catch (e) {
+                alert('❌ Fehler beim Löschen der Datenbank: ' + e.message);
+            }
         }
         
         // ----------------------------------------------------------------------
