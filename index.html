@@ -450,6 +450,9 @@
                     <div id="extracted-list" class="space-y-2">
                         </div>
                 </div>
+
+                <div id="editable-extracted-container" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-300">
+                </div>
             </div>
             
         </div>
@@ -577,6 +580,16 @@
     </div>
 
     <script>
+        // ╔═══════════════════════════════════════════════════════════════════════════════╗
+        // ║  GEMINI API KEY KONFIGURATION                                               ║
+        // ║  ═══════════════════════════════════════════════════════════════════════════════ ║
+        // ║  SCHRITT 1: Kopieren Sie Ihren Gemini API Key von hier:                     ║
+        // ║             https://aistudio.google.com/apikey                              ║
+        // ║  SCHRITT 2: Ersetzen Sie 'HIER_IHREN_API_KEY_EINSETZEN' mit Ihrem Key       ║
+        // ║  BEISPIEL: window.GEMINI_API_KEY = 'AIza123456789...';                      ║
+        // ╚═══════════════════════════════════════════════════════════════════════════════╝
+        window.GEMINI_API_KEY = 'AIzaSyAaUruitMzfziW0wtLododEDc8Gw27Cl34';
+
         // ----------------------------------------------------------------------
         // 1. Initial Data, Constants, and Storage
         // ----------------------------------------------------------------------
@@ -1078,25 +1091,79 @@
                 const base64ImageData = await fileToBase64(file);
                 const mimeType = file.type;
 
-                // --- KI-SIMULATION START ---
-                // Echte KI-Aufrufe werden hier durch Dummy-Ergebnisse ersetzt.
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Simuliere Ladezeit
-                const dummyResult = [
-                     { german: "Dummy-Vokabel 1", english: "dummy vocabulary 1" },
-                     { german: "Dummy-Vokabel 2", english: "dummy vocabulary 2" }
-                ];
-                const newVocabulary = dummyResult; 
-                // --- KI-SIMULATION ENDE ---
-                
-                addNewVocabulary(newVocabulary);
-                
-                addStatus.innerHTML = `<span class="text-green-600 font-medium">✅ ${newVocabulary.length} neue Vokabeln erfolgreich hinzugefügt!</span>`;
-                renderExtractedList(newVocabulary);
+                // **GEMINI API INTEGRATION**
+                // API Key wird von window.GEMINI_API_KEY gelesen (siehe unten bei Initialisierung)
+                if (!window.GEMINI_API_KEY || window.GEMINI_API_KEY === 'HIER_IHREN_API_KEY_EINSETZEN') {
+                    throw new Error('Gemini API Key nicht gesetzt. Bitte setzen Sie window.GEMINI_API_KEY in der Datei.');
+                }
+
+                const apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + window.GEMINI_API_KEY;
+
+                const requestBody = {
+                    contents: [{
+                        parts: [
+                            {
+                                text: 'Extrahiere alle Vokabelpaare aus diesem Bild. Das Bild zeigt Deutsche und Englische Vokabeln nebeneinander oder untereinander (z.B. "to adjust" / "einstellen"). Antworte NUR mit folgendem JSON-Format, KEINE anderen Texte: {"vocabularies": [{"german": "...", "english": "..."}, ...]}. Wenn das Bild keine klaren Vokabelpaare zeigt, antworte: {"vocabularies": []}.'
+                            },
+                            {
+                                inlineData: {
+                                    mimeType: mimeType,
+                                    data: base64ImageData
+                                }
+                            }
+                        ]
+                    }]
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(`Gemini API Fehler: ${response.status} - ${errorData.error?.message || 'Unbekannter Fehler'}`);
+                }
+
+                const result = await response.json();
+                const content = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+                // Parse JSON aus Antwort (robuste Variante)
+                let extractedVocabs = [];
+                try {
+                    // Versuche zuerst direktes JSON-Parsing
+                    try {
+                        const parsed = JSON.parse(content);
+                        extractedVocabs = parsed.vocabularies || [];
+                    } catch (directParseError) {
+                        // Falls direktes Parsing fehlschlägt, versuche JSON-Extraktion mit besserem Regex
+                        const jsonMatch = content.match(/\{[\s\S]*"vocabularies"[\s\S]*\}/);
+                        if (jsonMatch) {
+                            const parsed = JSON.parse(jsonMatch[0]);
+                            extractedVocabs = parsed.vocabularies || [];
+                        } else {
+                            throw new Error('Konnte JSON-Format in Antwort nicht finden. Antwort: ' + content.substring(0, 200));
+                        }
+                    }
+                } catch (parseError) {
+                    console.error('JSON Parse Error:', parseError, 'Response:', content);
+                    throw new Error('Konnte Antwort nicht verarbeiten. Stellen Sie sicher, dass das Bild klare Vokabelpaare zeigt.');
+                }
+
+                if (extractedVocabs.length === 0) {
+                    addStatus.innerHTML = '<span class="text-yellow-600 font-medium">⚠️ Keine Vokabeln im Bild gefunden.</span>';
+                    renderExtractedList([]);
+                } else {
+                    addStatus.innerHTML = `<span class="text-blue-600 font-medium">📝 ${extractedVocabs.length} Vokabeln gefunden. Überprüfen und bearbeiten Sie diese unten:</span>`;
+                    renderExtractedList(extractedVocabs);
+                    renderEditableExtractedList(extractedVocabs);
+                }
 
             } catch (error) {
                 console.error("Fehler beim Extrahieren der Vokabeln:", error);
-                let errorMessage = error.message.includes("Forbidden") ? "Zugriff verweigert (Berechtigungsproblem)." : error.message;
-                addStatus.innerHTML = `<span class="text-red-500 font-medium">❌ Fehler: Konnte Vokabeln nicht extrahieren. (${errorMessage}). Bitte versuchen Sie es erneut.</span>`;
+                let errorMessage = error.message;
+                addStatus.innerHTML = `<span class="text-red-500 font-medium">❌ Fehler: ${errorMessage}. Bitte versuchen Sie es erneut.</span>`;
             } finally {
                 scanButton.disabled = false;
             }
@@ -1140,13 +1207,102 @@
                         <p class="text-gray-600 italic">${card.english}</p>
                     </div>
                     <span class="text-xs text-teal-600 font-bold">NEU (Box 1)</span>
-                `; // **NEU: Hinweis auf Box 1**
+                `;
                 extractedList.appendChild(item);
             });
             
             if (list.length === 0) {
                  extractedList.innerHTML = '<p class="text-center text-gray-500 p-4">Es wurden keine gültigen Vokabelpaare gefunden.</p>';
             }
+        }
+
+        // Editable preview for extracted vocabularies
+        let pendingVocabularies = [];
+        function renderEditableExtractedList(list) {
+            pendingVocabularies = JSON.parse(JSON.stringify(list));
+            const container = document.getElementById('editable-extracted-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+            const heading = document.createElement('h4');
+            heading.className = 'text-lg font-bold text-gray-800 mb-3';
+            heading.textContent = '✏️ Vokabeln anpassen & überprüfen:';
+            container.appendChild(heading);
+
+            pendingVocabularies.forEach((card, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'p-3 bg-gray-50 rounded-lg border border-gray-300 mb-2';
+                itemDiv.innerHTML = `
+                    <div class="flex gap-2 mb-2">
+                        <div class="flex-1">
+                            <label class="text-xs font-semibold text-gray-700">Deutsch:</label>
+                            <input type="text" class="w-full p-1 border rounded text-sm" value="${card.german}" id="edit-de-${index}">
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-xs font-semibold text-gray-700">Englisch:</label>
+                            <input type="text" class="w-full p-1 border rounded text-sm" value="${card.english}" id="edit-en-${index}">
+                        </div>
+                    </div>
+                    <div class="flex gap-1">
+                        <button class="flex-1 bg-red-400 hover:bg-red-500 text-white text-xs font-bold py-1 rounded" onclick="removeEditableVocab(${index})">❌ Löschen</button>
+                    </div>
+                `;
+                container.appendChild(itemDiv);
+            });
+
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'mt-4 flex gap-2';
+            buttonDiv.innerHTML = `
+                <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 rounded-lg" onclick="confirmAndAddVocabularies()">✅ Alle hinzufügen</button>
+                <button class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg" onclick="cancelExtraction()">❌ Abbrechen</button>
+            `;
+            container.appendChild(buttonDiv);
+        }
+
+        window.removeEditableVocab = function(index) {
+            pendingVocabularies.splice(index, 1);
+            renderEditableExtractedList(pendingVocabularies);
+        }
+
+        window.confirmAndAddVocabularies = function() {
+            const container = document.getElementById('editable-extracted-container');
+            if (!container) return;
+
+            // Collect edited values
+            const updatedVocabs = [];
+            pendingVocabularies.forEach((card, index) => {
+                const deInput = document.getElementById(`edit-de-${index}`);
+                const enInput = document.getElementById(`edit-en-${index}`);
+                if (deInput && enInput) {
+                    updatedVocabs.push({
+                        german: deInput.value.trim(),
+                        english: enInput.value.trim()
+                    });
+                }
+            });
+
+            // Add to vocabulary
+            addNewVocabulary(updatedVocabs);
+            
+            // Clear UI
+            imageUpload.value = '';
+            imagePreviewContainer.classList.add('hidden');
+            extractedListContainer.classList.add('hidden');
+            container.innerHTML = '';
+            addStatus.innerHTML = `<span class="text-green-600 font-medium">✅ ${updatedVocabs.length} Vokabeln erfolgreich hinzugefügt!</span>`;
+            setTimeout(() => addStatus.innerHTML = '', 3000);
+            
+            pendingVocabularies = [];
+        }
+
+        window.cancelExtraction = function() {
+            imageUpload.value = '';
+            imagePreviewContainer.classList.add('hidden');
+            extractedListContainer.classList.add('hidden');
+            const container = document.getElementById('editable-extracted-container');
+            if (container) container.innerHTML = '';
+            addStatus.innerHTML = '';
+            pendingVocabularies = [];
         }
         
         // ----------------------------------------------------------------------
@@ -1498,8 +1654,18 @@
 
             // Verzögertes Setzen des Textes:
             setTimeout(() => {
-                // Set texts based on selected direction
-                updateDirectionUI();
+                // Set texts based on selected direction (de->en: show German, ask English | en->de: show English, ask German)
+                if (cardDirection === 'de->en') {
+                    frontTextElement.textContent = activeVocab.german;
+                    backTextElement.textContent = activeVocab.english;
+                    answerInput.placeholder = 'Deine englische Antwort...';
+                    feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
+                } else {
+                    frontTextElement.textContent = activeVocab.english;
+                    backTextElement.textContent = activeVocab.german;
+                    answerInput.placeholder = 'Deine deutsche Antwort...';
+                    feedbackElement.textContent = `Gib die deutsche Übersetzung von Box ${activeVocab.box} ein.`;
+                }
 
                 answerInput.disabled = false;
                 checkButton.disabled = false;
