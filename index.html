@@ -249,6 +249,13 @@
                     <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">Kasten-Auswahl für das Training:</h3>
                     <div id="box-selection-container" class="flex flex-wrap justify-center gap-3">
                         </div>
+                    <div class="mt-3 text-center">
+                        <label for="directionSelect" class="mr-2 font-medium text-gray-700">Richtung:</label>
+                        <select id="directionSelect" class="p-2 border rounded-lg text-sm">
+                            <option value="de->en">Deutsch → Englisch (Standard)</option>
+                            <option value="en->de">Englisch → Deutsch</option>
+                        </select>
+                    </div>
                 </div>
                  <div class="mb-6 text-center text-sm font-medium text-gray-600">
                     Gelernt: <span id="currentCardIndex">0</span> von <span id="totalCards">21</span> Vokabeln
@@ -275,7 +282,7 @@
                     <div class="p-4 bg-gray-50 rounded-lg shadow-inner">
                         <p id="feedback" class="text-center font-semibold mb-4 text-lg text-gray-700 h-6"></p>
 
-                        <input type="text" id="answerInput" placeholder="Deine englische Antwort..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-200" disabled>
+                        <input type="text" id="answerInput" placeholder="Deine Antwort..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-200" disabled>
                         
                         <div class="mt-4 space-y-2">
                             <button id="checkButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="checkAnswer()" disabled>
@@ -637,6 +644,9 @@
         // **NEU: Speichert die Boxen, die trainiert werden sollen (Standard: Box 1)**
         let selectedTrainingBoxes = [1]; 
 
+        // Card direction: 'de->en' shows German and expects English (default)
+        const DIRECTION_KEY = 'vokabeltrainer_v19_direction';
+        let cardDirection = 'de->en';
 
         // Games View Variables (Unverändert)
         let matchCardsData = [];
@@ -712,7 +722,40 @@
         function saveSelectedBoxes() {
              localStorage.setItem(SELECTED_BOXES_KEY, JSON.stringify(selectedTrainingBoxes));
         }
-        
+
+        // Save/load card direction
+        function saveCardDirection() {
+            try { localStorage.setItem(DIRECTION_KEY, cardDirection); } catch(e) { console.error('Fehler beim Speichern der Richtung:', e); }
+        }
+        function loadCardDirection() {
+            try {
+                const stored = localStorage.getItem(DIRECTION_KEY);
+                if (stored === 'en->de' || stored === 'de->en') {
+                    cardDirection = stored;
+                }
+                if (directionSelect) directionSelect.value = cardDirection;
+            } catch(e) { console.error('Fehler beim Laden der Richtung:', e); }
+        }
+
+        function updateDirectionUI() {
+            if (directionSelect) directionSelect.value = cardDirection;
+            if (cardDirection === 'de->en') {
+                answerInput.placeholder = 'Deine englische Antwort...';
+                if (activeVocab) {
+                    frontTextElement.textContent = activeVocab.german;
+                    backTextElement.textContent = activeVocab.english;
+                    feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
+                }
+            } else {
+                answerInput.placeholder = 'Deine deutsche Antwort...';
+                if (activeVocab) {
+                    frontTextElement.textContent = activeVocab.english;
+                    backTextElement.textContent = activeVocab.german;
+                    feedbackElement.textContent = `Gib die deutsche Übersetzung von Box ${activeVocab.box} ein.`;
+                }
+            }
+        }
+
         // **ENTFERNT: setBoxTrainedDate() - DIESE FUNKTION WIRD NICHT MEHR BENÖTIGT.**
         // **ENTFERNT: hasBoxBeenTrainedToday() - DIESE FUNKTION WIRD NICHT MEHR BENÖTIGT.**
 
@@ -759,6 +802,8 @@
         const boxStatsHomeElement = document.getElementById('box-stats-home');
         // **NEU: Box Selection Container für Train View**
         const boxSelectionContainer = document.getElementById('box-selection-container');
+        // Direction select in Train View
+        const directionSelect = document.getElementById('directionSelect');
         // **NEU: List Filter Info für List View**
         const listFilterInfo = document.getElementById('list-filter-info');
         
@@ -802,6 +847,16 @@
         // ----------------------------------------------------------------------
         // 3. Helper Functions (Unverändert)
         // ----------------------------------------------------------------------
+
+        // Direction select handler setup (if element exists)
+        if (typeof directionSelect !== 'undefined' && directionSelect) {
+            directionSelect.onchange = function(e) {
+                cardDirection = e.target.value;
+                saveCardDirection();
+                updateDirectionUI();
+            };
+        }
+
 
         function shuffleArray(array) {
             for (let i = array.length - 1; i > 0; i--) {
@@ -1336,7 +1391,7 @@
                     cardElement.classList.toggle('flipped');
                     
                     if (!cardElement.classList.contains('flipped')) {
-                        feedbackElement.textContent = 'Gib die englische Übersetzung ein.';
+                        feedbackElement.textContent = (cardDirection === 'de->en') ? 'Gib die englische Übersetzung ein.' : 'Gib die deutsche Übersetzung ein.';
                         answerInput.disabled = false;
                         checkButton.disabled = false;
                         answerInput.focus();
@@ -1443,16 +1498,13 @@
 
             // Verzögertes Setzen des Textes:
             setTimeout(() => {
-                // Zeigt die deutsche Vokabel als Frage
-                frontTextElement.textContent = activeVocab.german; 
-                // Zeigt die englische Vokabel als Antwort
-                backTextElement.textContent = activeVocab.english; 
-                
+                // Set texts based on selected direction
+                updateDirectionUI();
+
                 answerInput.disabled = false;
                 checkButton.disabled = false;
                 showAnswerButton.classList.remove('hidden'); 
                 nextActions.classList.add('hidden');
-                feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
                 answerInput.focus();
             }, 100); // 100ms Verzögerung, um das "Laden" zu simulieren und das Verraten zu verhindern
         }
@@ -1462,7 +1514,7 @@
             
             const userAnswer = normalizeAnswer(answerInput.value);
             // Korrekte Antwort ist die englische Vokabel
-            const correctAnswer = normalizeAnswer(activeVocab.english); 
+            const correctAnswer = (cardDirection === 'de->en') ? normalizeAnswer(activeVocab.english) : normalizeAnswer(activeVocab.german); 
 
             if (userAnswer === '') {
                 feedbackElement.textContent = 'Bitte gib eine Antwort ein.';
@@ -2103,8 +2155,11 @@
 
         window.onload = function() {
             loadVocabulary(); // Vokabeln aus dem Local Storage laden
+            // Load saved direction preference and update UI
+            loadCardDirection();
             initialDeckSize = VOCABULARY_BASE.length;
             totalCardsElement.textContent = initialDeckSize;
+            updateDirectionUI();
             
             showView('home'); 
         }
