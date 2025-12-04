@@ -18,6 +18,7 @@
         #flashcard {
             width: 100%;
             height: 400px; 
+            max-height: 60vh;
             perspective: 1000px;
             position: relative;
             cursor: pointer; 
@@ -47,6 +48,39 @@
             align-items: center;
             justify-content: center;
             overflow: hidden;
+        }
+
+        /* Mobile adjustments */
+        @media (max-width: 640px) {
+            #flashcard {
+                height: 260px;
+            }
+            .flashcard-front, .flashcard-back {
+                padding: 0.75rem;
+                border-width: 3px;
+            }
+            .flashcard-front p, .flashcard-back p {
+                font-size: 1rem;
+                line-height: 1.15;
+                white-space: normal;
+                word-break: break-word;
+                hyphens: auto;
+                margin: 0;
+            }
+            #cardContainer {
+                padding: 0.5rem;
+            }
+            #answerInput {
+                padding: 0.75rem;
+            }
+            .nav-button {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            .match-card {
+                padding: 0.75rem;
+                font-size: 0.95rem;
+            }
         }
         
         .flashcard-front {
@@ -199,7 +233,7 @@
     <div id="app" class="max-w-xl mx-auto">
         <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center">Vokabel-Trainer</h1>
         
-        <div id="navigation" class="flex justify-center space-x-2 mb-8">
+        <div id="navigation" class="flex flex-wrap justify-center gap-2 mb-8">
             <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('home')">
                 🏠 Home
             </button>
@@ -306,7 +340,7 @@
                     <div class="p-4 bg-gray-50 rounded-lg shadow-inner">
                         <p id="feedback" class="text-center font-semibold mb-4 text-lg text-gray-700 h-6"></p>
 
-                        <input type="text" id="answerInput" placeholder="Deine Antwort..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-200" disabled>
+                        <input type="text" id="answerInput" placeholder="Antwort..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-200 text-sm" disabled>
                         
                         <div class="mt-4 space-y-2">
                             <button id="checkButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="checkAnswer()" disabled>
@@ -320,14 +354,14 @@
 
                         <div id="nextActions" class="mt-6 space-y-3 hidden">
                             <p class="text-center text-sm font-medium text-gray-600">Wähle Status und gehe zur nächsten Karte:</p>
-                            <div class="flex space-x-3">
-                                <button class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="processResult(true)">
-                                    ✅ Korrekt (Nächste Box)
-                                </button>
-                                <button class="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="processResult(false)">
-                                    ❌ Falsch (Box 1)
-                                </button>
-                            </div>
+                                <div class="flex flex-col sm:flex-row gap-2 sm:space-x-3">
+                                    <button class="w-full sm:flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="processResult(true)">
+                                        ✅ Korrekt (Nächste Box)
+                                    </button>
+                                    <button class="w-full sm:flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl transition-transform duration-150 active:scale-95" onclick="processResult(false)">
+                                        ❌ Falsch (Box 1)
+                                    </button>
+                                </div>
                         </div>
                         
                         <button id="startButton" class="w-full mt-4 bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="startTrainGame()">
@@ -406,9 +440,7 @@
                     <p id="result-grade" class="text-6xl font-black text-red-900 text-center mt-1">-</p>
                 </div>
                 
-                <button id="recalculateButton" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md recalculate-button mb-6 transition-transform active:scale-95" onclick="recalculateTestScore()">
-                    🔄 Note und Ergebnis neu berechnen (nach Korrektur)
-                </button>
+                <!-- Entfernt: Button redundant, da Ergebnisse nach Korrektur automatisch neu berechnet werden -->
 
                 <h4 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Detaillierte Korrektur (Manuell anpassbar)</h4>
                 <div id="test-correction" class="space-y-4">
@@ -566,7 +598,7 @@
                             <p id="fibSentence" class="text-xl font-medium text-gray-900 text-center p-3 border-b-2 border-dashed border-gray-300 italic"></p>
                         </div>
                         
-                        <input type="text" id="fibAnswerInput" placeholder="Deine englische Antwort eingeben..." class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <input type="text" id="fibAnswerInput" placeholder="Englische Antwort" class="p-3 border-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-yellow-500">
                         
                         <div class="mt-4 space-y-2">
                             <button id="fibCheckButton" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 px-4 rounded-xl shadow-md transition-transform duration-150 active:scale-95" onclick="checkFillInBlankAnswer()">
@@ -873,18 +905,18 @@
         function updateDirectionUI() {
             if (directionSelect) directionSelect.value = cardDirection;
             if (cardDirection === 'de->en') {
-                answerInput.placeholder = 'Deine englische Antwort...';
+                answerInput.placeholder = 'Englische Antwort';
                 if (activeVocab) {
                     frontTextElement.textContent = activeVocab.german;
                     backTextElement.textContent = activeVocab.english;
-                    feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
+                    feedbackElement.textContent = 'Gib die englische Übersetzung ein.';
                 }
             } else {
-                answerInput.placeholder = 'Deine deutsche Antwort...';
+                answerInput.placeholder = 'Deutsche Antwort';
                 if (activeVocab) {
                     frontTextElement.textContent = activeVocab.english;
                     backTextElement.textContent = activeVocab.german;
-                    feedbackElement.textContent = `Gib die deutsche Übersetzung von Box ${activeVocab.box} ein.`;
+                    feedbackElement.textContent = 'Gib die deutsche Übersetzung ein.';
                 }
             }
         }
@@ -1819,8 +1851,8 @@
                         frontTextElement.textContent = activeVocab.english;
                         backTextElement.textContent = activeVocab.german;
                     }
-                    answerInput.placeholder = 'Deine englische Antwort...';
-                    feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
+                    answerInput.placeholder = 'Englische Antwort';
+                    feedbackElement.textContent = 'Gib die englische Übersetzung ein.';
                 } else {
                     if (!dataInverted) {
                         frontTextElement.textContent = activeVocab.english;
@@ -1829,8 +1861,8 @@
                         frontTextElement.textContent = activeVocab.german;
                         backTextElement.textContent = activeVocab.english;
                     }
-                    answerInput.placeholder = 'Deine deutsche Antwort...';
-                    feedbackElement.textContent = `Gib die deutsche Übersetzung von Box ${activeVocab.box} ein.`;
+                    answerInput.placeholder = 'Deutsche Antwort';
+                    feedbackElement.textContent = 'Gib die deutsche Übersetzung ein.';
                 }
 
                 answerInput.disabled = false;
