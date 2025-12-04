@@ -264,6 +264,11 @@
         
         <div id="train-view" class="view hidden">
             <div class="max-w-xl mx-auto">
+                <div class="mb-4 flex justify-end">
+                    <button id="cancelTrainButton" class="bg-red-400 hover:bg-red-500 text-white font-bold py-1 px-3 rounded-lg text-sm transition-colors duration-150 hidden" onclick="cancelTraining()">
+                        ✕ Beenden
+                    </button>
+                </div>
                  <div class="p-4 bg-yellow-100 rounded-xl shadow-md mb-6 border border-yellow-300">
                     <h3 class="text-lg font-bold text-gray-800 mb-3 text-center">Kasten-Auswahl für das Training:</h3>
                     <div id="box-selection-container" class="flex flex-wrap justify-center gap-3">
@@ -442,7 +447,7 @@
                 <p id="manual-status" class="text-center font-semibold mt-3 h-6 text-sm"></p>
             </div>
 
-            <div class="p-6 bg-teal-50 rounded-xl border-4 border-teal-300 shadow-lg">
+            <div class="p-6 bg-teal-50 rounded-xl border-4 border-teal-300 shadow-lg relative">
                 <h3 class="text-xl font-bold text-teal-700 mb-4">📸 Vokabeln per Foto hinzufügen (KI)</h3>
 
                 <p class="text-gray-600 mb-4 text-sm">Wählen Sie ein Bild mit Vokabelpaaren. Die KI liest die Vokabeln aus und fügt sie Ihrer Liste hinzu.</p>
@@ -450,14 +455,13 @@
                 <label class="block text-sm font-medium text-gray-700 mb-2" for="imageUpload">
                     1. Foto auswählen:
                 </label>
-                <input type="file" id="imageUpload" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg mb-4">
+                <input type="file" id="imageUpload" accept="image/*" class="w-full p-2 border border-gray-300 rounded-lg mb-4" disabled>
 
                 <button id="scanButton" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="extractVocabularyFromImage()" disabled>
                     Vokabeln scannen und extrahieren
                 </button>
                 
-                <div id="add-status" class="mt-4 flex items-center justify-center space-x-3 h-10">
-                    </div>
+                <div id="add-status" class="mt-4 flex items-center justify-center space-x-3 h-10"></div>
 
                 <div id="image-preview-container" class="mt-6 p-4 border border-gray-200 rounded-lg hidden">
                     <p class="text-sm font-semibold text-gray-700 mb-2">Vorschau des gescannten Bildes:</p>
@@ -466,11 +470,18 @@
 
                 <div id="extracted-list-container" class="mt-6 hidden">
                     <h4 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Gefundene Vokabeln (<span id="extractedCount">0</span>)</h4>
-                    <div id="extracted-list" class="space-y-2">
-                        </div>
+                    <div id="extracted-list" class="space-y-2"></div>
                 </div>
 
-                <div id="editable-extracted-container" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-300">
+                <div id="editable-extracted-container" class="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-300"></div>
+
+                <!-- Visuelle, halbtransparente Überlagerung - deaktiviert und zentrierte Hauptmeldung -->
+                <div aria-hidden="true" style="position:absolute;inset:0;background:rgba(120,120,120,0.78);backdrop-filter: blur(1px);z-index:30;display:flex;align-items:center;justify-content:center;padding:0;border-radius:0.5rem;">
+                    <div style="text-align:center;max-width:80%;">
+                        <div style="background:rgba(255,255,255,0.03);padding:14px 18px;border-radius:12px;">
+                            <p style="color:#ff0000;font-weight:900;font-size:1.5rem;line-height:1.2;margin:0;">🔴 Die Funktion ist vorübergehend deaktiviert</p>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -509,6 +520,14 @@
                     <p class="text-gray-700 mb-4">Löschen Sie alle Ihre Vokabeln und Lernfortschritte. Diese Aktion kann NICHT rückgängig gemacht werden!</p>
                     <button class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="confirmClearDatabase()">
                         🗑️ Alle Daten löschen (Neustart)
+                    </button>
+                </div>
+
+                <div class="p-6 bg-yellow-50 rounded-xl border-4 border-yellow-300 shadow-lg mt-4">
+                    <h3 class="text-xl font-bold text-yellow-700 mb-3">🔁 Werkseinstellungen (Standard-Vokabeln laden)</h3>
+                    <p class="text-gray-700 mb-4">Setzt Fortschritte zurück und lädt die Standard-Vokabeln (~36 Einträge). Die App bleibt betriebsbereit.</p>
+                    <button id="resetDefaultsButton" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="confirmResetToDefaults()">
+                        🔁 Auf Standard zurücksetzen (nur Default-Vokabeln)
                     </button>
                 </div>
 
@@ -658,7 +677,7 @@
         // ║  SCHRITT 2: Ersetzen Sie 'HIER_IHREN_API_KEY_EINSETZEN' mit Ihrem Key       ║
         // ║  BEISPIEL: window.GEMINI_API_KEY = 'AIza123456789...';                      ║
         // ╚═══════════════════════════════════════════════════════════════════════════════╝
-        window.GEMINI_API_KEY = 'AIzaSyAaUruitMzfziW0wtLododEDc8Gw27Cl34';
+        window.GEMINI_API_KEY = 'HIER_IHREN_API_KEY_EINSETZEN';
 
         // ----------------------------------------------------------------------
         // 1. Initial Data, Constants, and Storage
@@ -726,6 +745,8 @@
         let activeVocab = null; 
         // **NEU: Speichert die Boxen, die trainiert werden sollen (Standard: Box 1)**
         let selectedTrainingBoxes = [1]; 
+        // **NEU: Daten-Inversion (falls DEFAULT_VOCABULARY versehentlich vertauschte Felder enthält)**
+        let dataInverted = false;
 
         // Card direction: 'de->en' shows German and expects English (default)
         const DIRECTION_KEY = 'vokabeltrainer_v19_direction';
@@ -789,10 +810,35 @@
                     selectedTrainingBoxes = JSON.parse(storedBoxes);
                 }
                 
+                // Prüfe, ob die Daten invertiert vorliegen (z.B. german/english Felder vertauscht)
+                try { detectDataInversion(); } catch(e) { console.error('Fehler bei dataInversion check:', e); }
+                
             } catch (e) {
                 console.error("Fehler beim Laden der Vokabeln aus Local Storage:", e);
                 // Fallback zu Standard-Vokabeln
                 VOCABULARY_BASE = DEFAULT_VOCABULARY;
+            }
+        }
+
+        // Prüft, ob die geladenen Vokabelobjekte versehentlich vertauschte Felder haben
+        function detectDataInversion() {
+            try {
+                if (!VOCABULARY_BASE || VOCABULARY_BASE.length === 0) return;
+                const sample = VOCABULARY_BASE.slice(0, Math.min(10, VOCABULARY_BASE.length));
+                let germanHasUmlaut = 0;
+                let englishHasUmlaut = 0;
+                sample.forEach(v => {
+                    if (!v) return;
+                    try {
+                        if (/[äöüßÄÖÜ]/.test(String(v.german))) germanHasUmlaut++;
+                        if (/[äöüßÄÖÜ]/.test(String(v.english))) englishHasUmlaut++;
+                    } catch (e) {}
+                });
+                // Wenn mehr deutsche Zeichen im englisch-Feld vorkommen, ist wahrscheinlich invertiert
+                dataInverted = englishHasUmlaut > germanHasUmlaut;
+                if (dataInverted) console.info('DATA INVERSION detected: german/english fields appear swapped');
+            } catch (e) {
+                console.error('Fehler bei der Erkennung invertierter Daten:', e);
             }
         }
 
@@ -1610,7 +1656,8 @@
                     cardElement.classList.toggle('flipped');
                     
                     if (!cardElement.classList.contains('flipped')) {
-                        feedbackElement.textContent = (cardDirection === 'de->en') ? 'Gib die englische Übersetzung ein.' : 'Gib die deutsche Übersetzung ein.';
+                        const dir = (directionSelect && directionSelect.value) ? directionSelect.value : cardDirection;
+                        feedbackElement.textContent = (dir === 'de->en') ? 'Gib die englische Übersetzung ein.' : 'Gib die deutsche Übersetzung ein.';
                         answerInput.disabled = false;
                         checkButton.disabled = false;
                         answerInput.focus();
@@ -1682,11 +1729,50 @@
             answerInput.focus();
             cardElement.classList.remove('flipped');
             
+            // Beenden-Button anzeigen
+            document.getElementById('cancelTrainButton').classList.remove('hidden');
+            
             // Box-Auswahl während des Trainings deaktivieren
             boxSelectionContainer.querySelectorAll('input').forEach(input => input.disabled = true);
             
             renderBoxStats(); // Box-Statistiken aktualisieren
             loadCard();
+        }
+        
+        // **NEUE FUNKTION: Bricht das aktuelle Training ab und setzt alles zurück**
+        window.cancelTraining = function() {
+            // Trainings-Zustand zurücksetzen
+            cards = [];
+            currentCardIndex = 0;
+            correctAnswersCount = 0;
+            initialDeckSize = 0;
+            activeVocab = null;
+            
+            // UI-Elemente zurücksetzen
+            cardElement.classList.remove('flipped');
+            frontTextElement.textContent = 'Klicke auf START';
+            backTextElement.textContent = '';
+            feedbackElement.textContent = '';
+            answerInput.value = '';
+            answerInput.disabled = true;
+            checkButton.disabled = true;
+            showAnswerButton.classList.add('hidden');
+            nextActions.classList.add('hidden');
+            
+            // Progress-Anzeige zurücksetzen
+            progressBar.style.width = '0%';
+            currentCardIndexElement.textContent = '0';
+            totalCardsElement.textContent = '0';
+            
+            // Start-Button anzeigen, Beenden-Button verbergen
+            startButton.classList.remove('hidden');
+            document.getElementById('cancelTrainButton').classList.add('hidden');
+            
+            // Box-Auswahl wieder aktivieren
+            boxSelectionContainer.querySelectorAll('input').forEach(input => input.disabled = false);
+            
+            // Box-Statistiken aktualisieren
+            renderBoxStats();
         }
         
         // NEUE HELFERFUNKTION: Setzt die Karte sofort zurück, um die nächste Vokabel zu verdecken
@@ -1713,19 +1799,36 @@
             
             currentCardIndexElement.textContent = correctAnswersCount;
             totalCardsElement.textContent = initialDeckSize;
-            progressBar.style.width = `${(currentCardIndex / initialDeckSize) * 100}%`; 
+            // Fortschrittsbalken zeigt jetzt nur korrekt beantwortete Vokabeln an
+            progressBar.style.width = `${(initialDeckSize > 0 ? (correctAnswersCount / initialDeckSize) * 100 : 0)}%`; 
 
             // Verzögertes Setzen des Textes:
             setTimeout(() => {
-                // Set texts based on selected direction (de->en: show German, ask English | en->de: show English, ask German)
-                if (cardDirection === 'de->en') {
-                    frontTextElement.textContent = activeVocab.german;
-                    backTextElement.textContent = activeVocab.english;
+                // Verwende die aktuell ausgewählte Richtung aus dem Select (Fallback auf cardDirection)
+                const dir = (directionSelect && directionSelect.value) ? directionSelect.value : cardDirection;
+
+                // Wenn die eingelesenen Daten vertauscht sind (dataInverted), dann sind
+                // 'german' und 'english' Felder in den Objekten vertauscht.
+                // Wir passen Anzeige und Platzhalter entsprechend an.
+                if (dir === 'de->en') {
+                    if (!dataInverted) {
+                        frontTextElement.textContent = activeVocab.german;
+                        backTextElement.textContent = activeVocab.english;
+                    } else {
+                        // Daten sind invertiert: english enthält das deutsche Wort
+                        frontTextElement.textContent = activeVocab.english;
+                        backTextElement.textContent = activeVocab.german;
+                    }
                     answerInput.placeholder = 'Deine englische Antwort...';
                     feedbackElement.textContent = `Gib die englische Übersetzung von Box ${activeVocab.box} ein.`;
                 } else {
-                    frontTextElement.textContent = activeVocab.english;
-                    backTextElement.textContent = activeVocab.german;
+                    if (!dataInverted) {
+                        frontTextElement.textContent = activeVocab.english;
+                        backTextElement.textContent = activeVocab.german;
+                    } else {
+                        frontTextElement.textContent = activeVocab.german;
+                        backTextElement.textContent = activeVocab.english;
+                    }
                     answerInput.placeholder = 'Deine deutsche Antwort...';
                     feedbackElement.textContent = `Gib die deutsche Übersetzung von Box ${activeVocab.box} ein.`;
                 }
@@ -1742,8 +1845,16 @@
             if (!activeVocab) return;
             
             const userAnswer = normalizeAnswer(answerInput.value);
-            // Korrekte Antwort ist die englische Vokabel
-            const correctAnswer = (cardDirection === 'de->en') ? normalizeAnswer(activeVocab.english) : normalizeAnswer(activeVocab.german); 
+            // Verwende die aktuell ausgewählte Richtung aus dem Select (Fallback auf cardDirection)
+            const dir = (directionSelect && directionSelect.value) ? directionSelect.value : cardDirection;
+            // Bestimme die korrekte Antwort unter Berücksichtigung möglicher Daten-Inversion
+            let correctAnswerRaw;
+            if (dir === 'de->en') {
+                correctAnswerRaw = dataInverted ? activeVocab.german : activeVocab.english;
+            } else {
+                correctAnswerRaw = dataInverted ? activeVocab.english : activeVocab.german;
+            }
+            const correctAnswer = normalizeAnswer(correctAnswerRaw);
 
             if (userAnswer === '') {
                 feedbackElement.textContent = 'Bitte gib eine Antwort ein.';
@@ -1820,6 +1931,9 @@
             
             // **NEU: Trainings-Session aufzeichnen**
             recordTrainingSession();
+            
+            // Beenden-Button verbergen
+            document.getElementById('cancelTrainButton').classList.add('hidden');
             
             renderBoxStats(); 
         }
@@ -2668,6 +2782,43 @@
             }
         }
         
+        // ---------- NEU: Werkseinstellungen zurücksetzen (Default-Vokabeln laden) ----------
+        window.confirmResetToDefaults = function() {
+            const confirmed = confirm('Möchten Sie wirklich alle Fortschrittsdaten zurücksetzen und die Standard-Vokabeln laden?');
+            if (!confirmed) return;
+            resetToDefaults();
+        }
+
+        function resetToDefaults() {
+            try {
+                // Schreibe die DEFAULT_VOCABULARY in den Storage
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_VOCABULARY));
+
+                // Entferne Fortschritts-/Sitzungsdaten
+                localStorage.removeItem(PROGRESS_KEY);
+                localStorage.removeItem(TRAINING_SESSIONS_KEY);
+                localStorage.removeItem(LAST_TRAINED_KEY);
+
+                // Setze Auswahl der Boxen auf Standard (Box 1)
+                localStorage.setItem(SELECTED_BOXES_KEY, JSON.stringify([1]));
+
+                // Lade die Vokabeln neu in die Laufzeit-Variable
+                loadVocabulary();
+                saveSelectedBoxes();
+
+                // UI-Aktualisierungen
+                try { renderBoxStatsHome(); } catch(e) {}
+                try { renderBoxStats(); } catch(e) {}
+                try { updateSettingsStats(); } catch(e) {}
+
+                alert('✅ Daten wurden zurückgesetzt und Standard-Vokabeln geladen.');
+                showView('home');
+            } catch (e) {
+                console.error('Fehler beim Zurücksetzen auf Werkseinstellungen:', e);
+                alert('❌ Fehler beim Zurücksetzen der Daten. Bitte prüfen Sie die Konsole.');
+            }
+        }
+
         // ----------------------------------------------------------------------
         // 11. Initialisierung
         // ----------------------------------------------------------------------
