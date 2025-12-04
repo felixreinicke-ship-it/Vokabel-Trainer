@@ -243,9 +243,6 @@
             <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('list')">
                 📚 Liste
             </button>
-            <button class="nav-button bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-150" onclick="showView('test')">
-                📝 Test
-            </button>
         </div>
 
 
@@ -253,7 +250,7 @@
             <div class="p-8 bg-white rounded-xl shadow-2xl text-center">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Wähle dein Lernmodul</h2>
                 <div class="space-y-4">
-                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('train')">
+                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-8 text-lg rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('train')">
                         🧠 Vokabeln lernen (Karteikarten)
                     </button>
                     <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('list')">
@@ -285,6 +282,33 @@
                 <div id="box-stats-home" class="space-y-4">
                     </div>
                 <p class="mt-4 text-sm text-gray-500 text-center">Klicken Sie auf einen Kasten, um alle darin enthaltenen Vokabeln zu sehen.</p>
+            </div>
+
+            <div class="mt-8 p-4 bg-white rounded-3xl shadow-2xl">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">📅 Testplan - Diese Woche</h2>
+                
+                <div class="mb-6 p-4 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-3xl border-2 border-orange-300">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-sm text-gray-700 font-semibold">🔥 Dein Streak</p>
+                            <p class="text-4xl font-bold text-orange-600" id="calendarStreakDisplay">0</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-sm text-gray-700 font-semibold">Nächster Test</p>
+                            <p class="text-2xl font-bold text-orange-500" id="nextTestCountdown">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="grid grid-cols-7 gap-2" id="weekCalendarContainer">
+                        <!-- Wochentage werden hier eingefügt -->
+                    </div>
+                </div>
+
+                <div class="p-4 bg-blue-50 rounded-3xl border-2 border-blue-300 text-center">
+                    <p class="text-sm text-gray-700 font-semibold">💡 Klick auf einen Tag, um einen Test hinzuzufügen</p>
+                </div>
             </div>
 
             <div class="mt-8 p-6 bg-white rounded-xl shadow-2xl">
@@ -377,6 +401,10 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Vokabelliste (Deutsch ↔ Englisch)</h2>
              <p id="list-filter-info" class="text-center text-sm text-gray-600 mb-4 font-semibold">Alle Vokabeln werden angezeigt.</p>
             
+            <div class="mb-6">
+                <input type="text" id="vocabularySearchInput" placeholder="🔍 Vokabel suchen (Deutsch oder Englisch)..." class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors">
+            </div>
+            
             <div class="overflow-x-auto rounded-lg border border-gray-200">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="list-header">
@@ -403,8 +431,14 @@
         </div>
 
         <div id="test-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📝 Vokabel-Test (Deutsch → Englisch)</h2>
-            
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📝 Vokabel-Test</h2>
+            <div class="flex justify-center mb-4">
+                <label for="testDirectionSelect" class="mr-2 font-medium text-gray-700">Abfrage-Richtung:</label>
+                <select id="testDirectionSelect" class="p-2 border rounded-lg text-sm">
+                    <option value="de->en">Deutsch → Englisch (Standard)</option>
+                    <option value="en->de">Englisch → Deutsch</option>
+                </select>
+            </div>
             <div id="test-container">
                 <p id="test-info" class="text-center text-gray-600 mb-6"></p>
 
@@ -583,7 +617,7 @@
 
                 <div class="p-6 bg-purple-50 rounded-xl border-4 border-purple-300 shadow-lg">
                     <h3 class="text-xl font-bold text-purple-700 mb-3">📝 Trainings-Log</h3>
-                    <p class="text-sm text-gray-600 mb-3">Letzte Trainings mit Zeitstempel, korrekten Antworten und Erfolgsquote:</p>
+                    <p class="text-sm text-gray-600 mb-3">Letzte Trainings mit Zeitstempel, korrekten Antworten und Erfolgsquote. Klick auf einen Eintrag für Details:</p>
                     <div id="training-log-container" class="text-gray-700">
                         <!-- Wird von renderTrainingLog() gefüllt -->
                     </div>
@@ -592,6 +626,14 @@
                 <button class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95" onclick="showView('home')">
                     ← Zurück zur Startseite
                 </button>
+            </div>
+        </div>
+
+        <div id="session-details-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                <div id="session-details-content">
+                    <!-- Wird von showSessionDetails() gefüllt -->
+                </div>
             </div>
         </div>
 
@@ -791,7 +833,9 @@
         let correctAnswersCount = 0; 
         let initialDeckSize = 0;
         // **NEU: Speichert die gerade aktive Vokabel aus VOCABULARY_BASE**
-        let activeVocab = null; 
+        let activeVocab = null;
+        // **NEU: Speichert Details der Vokabeln während des Trainings**
+        let trainingSessionDetails = []; 
         // **NEU: Speichert die Boxen, die trainiert werden sollen (Standard: Box 1)**
         let selectedTrainingBoxes = [1]; 
         // **NEU: Daten-Inversion (falls DEFAULT_VOCABULARY versehentlich vertauschte Felder enthält)**
@@ -833,6 +877,8 @@
         const LAST_TRAINED_KEY = 'vokabeltrainer_v19_last_trained';
         // **NEU: Detailliertes Trainings-Log mit Zeitstempel und Ergebnissen**
         const TRAINING_LOG_KEY = 'vokabeltrainer_v19_training_log';
+        // **NEU: Speichert geplante Tests im Kalender**
+        const SCHEDULED_TESTS_KEY = 'vokabeltrainer_v19_scheduled_tests';
         
         // **ENTFERNT: BOX_TRAIN_DATE_KEY - DIESE KONSTANTE WIRD NICHT MEHR BENÖTIGT.**
 
@@ -1091,6 +1137,10 @@
                 renderProgressChart();
                 // **NEU: Update Streak Display**
                 updateStreakDisplay();
+                // **NEU: Render Testplan-Kalender auf der Home-Seite**
+                renderTestCalendar();
+                updateCalendarCountdown();
+                document.getElementById('calendarStreakDisplay').textContent = document.getElementById('streak-display').textContent;
             } else if (viewId === 'settings') {
                 // **NEU: Update Settings Stats beim Öffnen**
                 updateSettingsStats();
@@ -1499,19 +1549,23 @@
                  listFilterInfo.textContent = `Alle Vokabeln werden angezeigt (insgesamt: ${VOCABULARY_BASE.length})`;
             }
             
-            filteredVocab.sort((a, b) => a.german.localeCompare(b.german));
+            filteredVocab.sort((a, b) => (dataInverted ? a.english.localeCompare(b.english) : a.german.localeCompare(b.german)));
             
             filteredVocab.forEach((card, index) => {
                 const row = vocabularyListBody.insertRow();
                 row.classList.add('hover:bg-gray-50', 'transition-colors');
                 
+                // Bestimme Deutsch und Englisch basierend auf dataInverted
+                const germanText = dataInverted ? card.english : card.german;
+                const englishText = dataInverted ? card.german : card.english;
+                
                 let cellGerman = row.insertCell();
                 cellGerman.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
-                cellGerman.textContent = card.german;
+                cellGerman.textContent = germanText;
                 
                 let cellEnglish = row.insertCell();
                 cellEnglish.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'text-gray-500');
-                cellEnglish.textContent = card.english;
+                cellEnglish.textContent = englishText;
                 
                 // **NEU: Box-Spalte**
                 let cellBox = row.insertCell();
@@ -1537,6 +1591,40 @@
             });
             
             listTotalCountElement.textContent = VOCABULARY_BASE.length;
+            
+            // Suchfeld Setup
+            const searchInput = document.getElementById('vocabularySearchInput');
+            if (searchInput) {
+                searchInput.value = ''; // Suchfeld leeren
+                searchInput.onkeyup = filterVocabularyList;
+            }
+        }
+        
+        // **NEUE FUNKTION: Filtert die Vokabelliste basierend auf Suchtext**
+        function filterVocabularyList() {
+            const searchText = document.getElementById('vocabularySearchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#vocabularyListBody tr');
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const germanCell = row.cells[0].textContent.toLowerCase();
+                const englishCell = row.cells[1].textContent.toLowerCase();
+                
+                // Zeige die Reihe nur, wenn der Suchtext in Deutsch oder Englisch vorkommt
+                if (germanCell.includes(searchText) || englishCell.includes(searchText)) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Aktualisiere die Anzeige
+            if (searchText === '') {
+                listFilterInfo.textContent = `Alle Vokabeln werden angezeigt (insgesamt: ${VOCABULARY_BASE.length})`;
+            } else {
+                listFilterInfo.textContent = `Suchergebnis: ${visibleCount} von ${VOCABULARY_BASE.length} Vokabeln gefunden`;
+            }
         }
         
         window.deleteVocabularyItem = function(vocabToDelete) {
@@ -1764,6 +1852,7 @@
             currentCardIndex = 0;
             correctAnswersCount = 0;
             initialDeckSize = cards.length;
+            trainingSessionDetails = []; // **NEU: Reset für neues Training**
             
             // **REPARATUR: Entfernung der Logik zur Markierung von Box 1 als trainiert.**
             // if (cards.some(v => v.box === 1)) {
@@ -1793,8 +1882,8 @@
         // **NEUE FUNKTION: Bricht das aktuelle Training ab und setzt alles zurück**
         window.cancelTraining = function() {
             // Speichere die Trainings-Session wenn mindestens eine Vokabel beantwortet wurde
-            if (correctAnswersCount > 0 || initialDeckSize > 0) {
-                recordTrainingSession();
+            if (trainingSessionDetails.length > 0) {
+                recordTrainingSession('normal', trainingSessionDetails);
             }
             
             // Trainings-Zustand zurücksetzen
@@ -1803,6 +1892,7 @@
             correctAnswersCount = 0;
             initialDeckSize = 0;
             activeVocab = null;
+            trainingSessionDetails = []; // **NEU: Reset Details**
             
             // UI-Elemente zurücksetzen
             cardElement.classList.remove('flipped');
@@ -1936,6 +2026,14 @@
         window.processResult = function(isCorrect) {
             if (!activeVocab) return;
             
+            // **NEU: Session-Details erfassen**
+            trainingSessionDetails.push({
+                german: activeVocab.german,
+                english: activeVocab.english,
+                isCorrect: isCorrect,
+                userAnswer: answerInput.value || '(Übersprungen)'
+            });
+            
             const vocabInBase = VOCABULARY_BASE.find(v => v.german === activeVocab.german && v.english === activeVocab.english);
             
             if (vocabInBase) {
@@ -1985,8 +2083,8 @@
             progressBar.style.width = '100%';
             currentCardIndexElement.textContent = currentScore;
             
-            // **NEU: Trainings-Session aufzeichnen**
-            recordTrainingSession();
+            // **NEU: Trainings-Session mit Details aufzeichnen**
+            recordTrainingSession('normal', trainingSessionDetails);
             
             // Beenden-Button verbergen
             document.getElementById('cancelTrainButton').classList.add('hidden');
@@ -1995,12 +2093,20 @@
         }
         
         // ----------------------------------------------------------------------
-        // 9. Test View Logic (Unverändert, aber die Daten sind jetzt korrekt)
+        // 9. Test View Logic
         // ----------------------------------------------------------------------
+        let testDirection = 'de->en';
+        
         window.startTest = function() {
             if (VOCABULARY_BASE.length < TEST_VOCABULARY_COUNT) {
                 testInfoElement.textContent = `Du benötigst mindestens ${TEST_VOCABULARY_COUNT} Vokabeln, um den Test zu starten. Aktuell: ${VOCABULARY_BASE.length}`;
                 return;
+            }
+
+            // Hole die Richtung aus dem Select-Element
+            const directionSelect = document.getElementById('testDirectionSelect');
+            if (directionSelect) {
+                testDirection = directionSelect.value;
             }
 
             testQuestionsContainer.innerHTML = '';
@@ -2008,18 +2114,29 @@
             
             const shuffledVocab = shuffleArray([...VOCABULARY_BASE]);
             testQuestions = shuffledVocab.slice(0, TEST_VOCABULARY_COUNT).map(v => ({
-                german: v.german, // Frage: Deutsch
-                english: v.english, // Erwartete Antwort: Englisch
+                vocab: v,
                 userAnswer: '',
                 isCorrect: false
             }));
             
             testQuestions.forEach((q, index) => {
+                let prompt, answerLabel;
+                
+                if (testDirection === 'de->en') {
+                    // Frage: Deutsch, Antwort: Englisch
+                    prompt = dataInverted ? q.vocab.english : q.vocab.german;
+                    answerLabel = 'Englische Übersetzung:';
+                } else {
+                    // Frage: Englisch, Antwort: Deutsch
+                    prompt = dataInverted ? q.vocab.german : q.vocab.english;
+                    answerLabel = 'Deutsche Übersetzung:';
+                }
+                
                 const questionHtml = `
                     <div id="test-q-${index}" class="test-question-item p-4 border-l-4 border-gray-400 bg-white rounded-lg shadow">
                         <p class="text-sm font-semibold text-gray-700 mb-2">Frage ${index + 1}:</p>
-                        <p class="text-xl font-bold text-gray-900 mb-3">${q.german}</p>
-                        <label for="answer-${index}" class="block text-sm font-medium text-gray-500 mb-1">Englische Übersetzung:</label>
+                        <p class="text-xl font-bold text-gray-900 mb-3">${prompt}</p>
+                        <label for="answer-${index}" class="block text-sm font-medium text-gray-500 mb-1">${answerLabel}</label>
                         <input type="text" id="answer-${index}" data-index="${index}" placeholder="Deine Antwort eingeben..." class="p-2 border border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-red-500 test-input" onchange="updateTestAnswer(${index}, this.value)">
                         <div id="correction-${index}" class="mt-2 text-sm text-red-600 font-medium hidden"></div>
                     </div>
@@ -2041,7 +2158,18 @@
         window.submitTest = function() {
             testResults = testQuestions.map((q, index) => {
                 const userAnswer = normalizeAnswer(q.userAnswer);
-                const correctAnswer = normalizeAnswer(q.english); // Prüft gegen Englisch
+                
+                // Bestimme die korrekte Antwort basierend auf testDirection
+                let correctAnswerRaw;
+                if (testDirection === 'de->en') {
+                    // Antwort sollte Englisch sein
+                    correctAnswerRaw = dataInverted ? q.vocab.german : q.vocab.english;
+                } else {
+                    // Antwort sollte Deutsch sein
+                    correctAnswerRaw = dataInverted ? q.vocab.english : q.vocab.german;
+                }
+                
+                const correctAnswer = normalizeAnswer(correctAnswerRaw);
                 const isCorrect = userAnswer === correctAnswer;
                 
                 const item = document.getElementById(`test-q-${index}`);
@@ -2050,16 +2178,75 @@
                 return {
                     ...q,
                     userAnswer: q.userAnswer,
+                    correctAnswer: correctAnswerRaw,
                     isCorrect: isCorrect,
                     status: isCorrect ? 'correct' : (q.userAnswer.trim() === '' ? 'skipped' : 'incorrect')
                 };
             });
+            
+            // **NEU: Vokabeln in Boxen verschieben basierend auf Test-Ergebnisse**
+            testResults.forEach(result => {
+                const vocabInBase = VOCABULARY_BASE.find(v => v.german === result.vocab.german && v.english === result.vocab.english);
+                if (vocabInBase) {
+                    if (result.isCorrect) {
+                        // Korrekt: in nächste Box verschieben
+                        vocabInBase.box = Math.min(vocabInBase.box + 1, NUM_BOXES);
+                    } else {
+                        // Falsch: zurück in Box 1
+                        vocabInBase.box = 1;
+                    }
+                }
+            });
+            // Speichere die geänderten Vokabeln
+            saveVocabulary();
             
             testContainer.classList.add('hidden');
             testResultsContainer.classList.remove('hidden');
             
             renderEditableCorrection();
             recalculateTestScore();
+            
+            // **NEU: Speichere Test als Trainings-Session mit Note**
+            const correctCount = testResults.filter(r => r.isCorrect).length;
+            const sessionDetails = testResults.map(r => ({
+                german: r.vocab.german,
+                english: r.vocab.english,
+                isCorrect: r.isCorrect,
+                userAnswer: r.userAnswer || '(Übersprungen)'
+            }));
+            
+            // Berechne die Note
+            const totalQuestions = testResults.length;
+            const percentage = totalQuestions > 0 ? (correctCount / totalQuestions) : 0;
+            let grade;
+            if (percentage >= 0.92) grade = '1+'; 
+            else if (percentage >= 0.85) grade = '1'; 
+            else if (percentage >= 0.80) grade = '1-';
+            else if (percentage >= 0.75) grade = '2+'; 
+            else if (percentage >= 0.67) grade = '2'; 
+            else if (percentage >= 0.60) grade = '2-'; 
+            else if (percentage >= 0.55) grade = '3+'; 
+            else if (percentage >= 0.50) grade = '3'; 
+            else if (percentage >= 0.45) grade = '3-'; 
+            else if (percentage >= 0.40) grade = '4+'; 
+            else if (percentage >= 0.33) grade = '4'; 
+            else if (percentage >= 0.25) grade = '4-'; 
+            else if (percentage >= 0.15) grade = '5'; 
+            else grade = '6';
+            
+            // Speichere Session und setze die Note
+            recordTrainingSession('test', sessionDetails);
+            
+            // Füge die Note zum letzten Log-Eintrag hinzu
+            try {
+                let log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
+                if (log.length > 0) {
+                    log[log.length - 1].grade = grade;
+                    localStorage.setItem(TRAINING_LOG_KEY, JSON.stringify(log));
+                }
+            } catch (e) {
+                console.error('Fehler beim Speichern der Note:', e);
+            }
         }
 
         window.setCorrectionStatus = function(index, newStatus) {
@@ -2081,6 +2268,83 @@
             }
 
             recalculateTestScore();
+            
+            // **NEU: Aktualisiere Boxen und Trainingslog nach manueller Änderung**
+            updateTestResultsInBoxes();
+            updateTrainingLogWithNewTestResults();
+        }
+        
+        // **NEU: Verschiebe Vokabeln in Boxen basierend auf den (möglicherweise geänderten) Test-Ergebnissen**
+        function updateTestResultsInBoxes() {
+            testResults.forEach(result => {
+                const vocabInBase = VOCABULARY_BASE.find(v => v.german === result.vocab.german && v.english === result.vocab.english);
+                if (vocabInBase) {
+                    if (result.isCorrect) {
+                        // Korrekt: in nächste Box verschieben
+                        vocabInBase.box = Math.min(vocabInBase.box + 1, NUM_BOXES);
+                    } else {
+                        // Falsch: zurück in Box 1
+                        vocabInBase.box = 1;
+                    }
+                }
+            });
+            // Speichere die geänderten Vokabeln
+            saveVocabulary();
+        }
+        
+        // **NEU: Aktualisiere das Trainingslog mit neuen Test-Ergebnissen nach manueller Änderung**
+        function updateTrainingLogWithNewTestResults() {
+            try {
+                let log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
+                if (log.length === 0) return;
+                
+                // Finde den letzten Test-Eintrag
+                const lastEntry = log[log.length - 1];
+                if (lastEntry.type !== 'test') return;
+                
+                // Berechne neue Werte basierend auf testResults
+                const correctCount = testResults.filter(r => r.isCorrect).length;
+                const totalCount = testResults.length;
+                
+                // Aktualisiere den Log-Eintrag
+                lastEntry.correct = correctCount;
+                lastEntry.total = totalCount;
+                lastEntry.successRate = totalCount > 0 ? ((correctCount / totalCount) * 100).toFixed(1) : '0';
+                lastEntry.details = testResults.map(r => ({
+                    german: r.vocab.german,
+                    english: r.vocab.english,
+                    isCorrect: r.isCorrect,
+                    userAnswer: r.userAnswer || '(Übersprungen)'
+                }));
+                
+                // Berechne die neue Note
+                const percentage = totalCount > 0 ? (correctCount / totalCount) : 0;
+                let grade;
+                if (percentage >= 0.92) grade = '1+'; 
+                else if (percentage >= 0.85) grade = '1'; 
+                else if (percentage >= 0.80) grade = '1-';
+                else if (percentage >= 0.75) grade = '2+'; 
+                else if (percentage >= 0.67) grade = '2'; 
+                else if (percentage >= 0.60) grade = '2-'; 
+                else if (percentage >= 0.55) grade = '3+'; 
+                else if (percentage >= 0.50) grade = '3'; 
+                else if (percentage >= 0.45) grade = '3-'; 
+                else if (percentage >= 0.40) grade = '4+'; 
+                else if (percentage >= 0.33) grade = '4'; 
+                else if (percentage >= 0.25) grade = '4-'; 
+                else if (percentage >= 0.15) grade = '5'; 
+                else grade = '6';
+                
+                lastEntry.grade = grade;
+                
+                // Speichere das aktualisierte Log
+                localStorage.setItem(TRAINING_LOG_KEY, JSON.stringify(log));
+                
+                // Aktualisiere die Anzeige
+                renderTrainingLog();
+            } catch (e) {
+                console.error('Fehler beim Aktualisieren des Trainings-Logs:', e);
+            }
         }
 
         function renderEditableCorrection() {
@@ -2094,8 +2358,8 @@
 
                 const itemHtml = `
                     <div class="p-4 rounded-lg shadow-md border-l-4 ${statusClass}">
-                        <p class="text-sm font-medium text-gray-700">Frage ${index + 1}: <span class="text-lg font-bold">${q.german}</span></p>
-                        <p class="text-xs text-gray-500 mt-1">Erwartet: <span class="font-bold text-gray-800">${q.english}</span></p>
+                        <p class="text-sm font-medium text-gray-700">Frage ${index + 1}: <span class="text-lg font-bold">${testDirection === 'de->en' ? (dataInverted ? q.vocab.english : q.vocab.german) : (dataInverted ? q.vocab.german : q.vocab.english)}</span></p>
+                        <p class="text-xs text-gray-500 mt-1">Erwartet: <span class="font-bold text-gray-800">${q.correctAnswer}</span></p>
                         <p class="text-xs text-gray-500">Deine Eingabe: <span class="font-bold text-gray-800">${q.userAnswer || '-- Leer --'}</span></p>
                         
                         <div class="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
@@ -2555,11 +2819,20 @@
         // 10.5 Settings & Progress Tracking
         // ----------------------------------------------------------------------
 
-        function recordTrainingSession() {
+        function recordTrainingSession(sessionType = 'normal', sessionDetails = null) {
             try {
                 const sessions = parseInt(localStorage.getItem(TRAINING_SESSIONS_KEY) || '0');
                 localStorage.setItem(TRAINING_SESSIONS_KEY, (sessions + 1).toString());
                 localStorage.setItem(LAST_TRAINED_KEY, new Date().toLocaleDateString('de-DE'));
+                
+                // **NEU: Berechne correct und total aus sessionDetails wenn vorhanden**
+                let correctCount = Number(correctAnswersCount) || 0;
+                let totalCount = Number(initialDeckSize) || 0;
+                
+                if (sessionDetails && sessionDetails.length > 0) {
+                    totalCount = sessionDetails.length;
+                    correctCount = sessionDetails.filter(d => d.isCorrect).length;
+                }
                 
                 // Progress tracking
                 let progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]');
@@ -2569,18 +2842,18 @@
                 const todayEntry = progress.find(p => p.date === today);
                 if (todayEntry) {
                     todayEntry.sessions = (todayEntry.sessions || 0) + 1;
-                    todayEntry.vocabs = (todayEntry.vocabs || 0) + (Number(correctAnswersCount) || 0);
+                    todayEntry.vocabs = (todayEntry.vocabs || 0) + correctCount;
                 } else {
                     progress.push({
                         date: today,
                         sessions: 1,
-                        vocabs: Number(correctAnswersCount) || 0
+                        vocabs: correctCount
                     });
                 }
                 
                 localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
                 
-                // **NEU: Speichere detailliertes Trainings-Log mit Zeitstempel**
+                // **NEU: Speichere detailliertes Trainings-Log mit Zeitstempel und Typ**
                 let log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
                 const now = new Date();
                 const timestamp = now.toLocaleString('de-DE', { 
@@ -2592,13 +2865,18 @@
                     second: '2-digit'
                 });
                 
-                log.push({
+                const logEntry = {
+                    id: Date.now().toString(),
                     timestamp: timestamp,
-                    correct: Number(correctAnswersCount) || 0,
-                    total: Number(initialDeckSize) || 0,
-                    successRate: initialDeckSize > 0 ? ((correctAnswersCount / initialDeckSize) * 100).toFixed(1) : '0'
-                });
+                    type: sessionType, // 'normal' oder 'test'
+                    correct: correctCount,
+                    total: totalCount,
+                    successRate: totalCount > 0 ? ((correctCount / totalCount) * 100).toFixed(1) : '0',
+                    grade: null, // Wird bei Tests gesetzt
+                    details: sessionDetails || [] // Array von { german, english, isCorrect, userAnswer }
+                };
                 
+                log.push(logEntry);
                 localStorage.setItem(TRAINING_LOG_KEY, JSON.stringify(log));
             } catch (e) {
                 console.error('Fehler beim Speichern der Trainingsstatistiken:', e);
@@ -2632,7 +2910,7 @@
         function renderTrainingLog() {
             try {
                 const container = document.getElementById('training-log-container');
-                if (!container) return; // Container existiert noch nicht im HTML
+                if (!container) return;
                 
                 const log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
                 
@@ -2641,7 +2919,7 @@
                     return;
                 }
                 
-                // Soriere Log in umgekehrter Reihenfolge (neueste zuerst) und begrenzte auf die letzten 20
+                // Sortiere Log in umgekehrter Reihenfolge (neueste zuerst) und begrenzte auf die letzten 20
                 const sortedLog = log.slice().reverse().slice(0, 20);
                 
                 let html = '<div class="space-y-2 max-h-96 overflow-y-auto">';
@@ -2649,6 +2927,8 @@
                     const successRate = parseFloat(entry.successRate || 0);
                     let bgColor = 'bg-red-100';
                     let textColor = 'text-red-700';
+                    let typeLabel = entry.type === 'test' ? '📝 Test' : '🧠 Training';
+                    let typeStyle = entry.type === 'test' ? 'bg-blue-200 text-blue-800' : 'bg-purple-200 text-purple-800';
                     
                     if (successRate >= 80) {
                         bgColor = 'bg-green-100';
@@ -2658,9 +2938,18 @@
                         textColor = 'text-yellow-700';
                     }
                     
-                    html += `<div class="p-3 rounded ${bgColor} ${textColor} text-sm">
-                        <div class="font-medium">${entry.timestamp}</div>
-                        <div class="text-xs mt-1">${entry.correct}/${entry.total} richtig | ${entry.successRate}%</div>
+                    let gradeDisplay = '';
+                    if (entry.type === 'test' && entry.grade) {
+                        gradeDisplay = ` | Note: <span class="font-bold">${entry.grade}</span>`;
+                    }
+                    
+                    html += `<div class="p-3 rounded ${bgColor} ${textColor} text-sm cursor-pointer hover:shadow-md transition-shadow" onclick="showSessionDetails('${entry.id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="font-medium">${entry.timestamp}</div>
+                            <span class="text-xs px-2 py-1 rounded-full ${typeStyle}">${typeLabel}</span>
+                        </div>
+                        <div class="text-xs mt-1">${entry.correct}/${entry.total} richtig | ${entry.successRate}%${gradeDisplay}</div>
+                        <div class="text-xs mt-2 opacity-70">👆 Klick für Details</div>
                     </div>`;
                 });
                 html += '</div>';
@@ -2670,6 +2959,92 @@
                 console.error('Fehler beim Rendern des Trainings-Logs:', e);
             }
         }
+
+        // **NEUE FUNKTION: Zeigt die Details einer Trainings-Session**
+        window.showSessionDetails = function(sessionId) {
+            try {
+                const log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
+                const session = log.find(s => s.id === sessionId);
+                
+                if (!session) return;
+                
+                let html = `
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">
+                            ${session.type === 'test' ? '📝 Vokabel-Test' : '🧠 Training'} - ${session.timestamp}
+                        </h3>
+                        
+                        <div class="grid grid-cols-2 gap-3 mb-6">
+                            <div class="p-3 bg-blue-100 rounded text-center">
+                                <p class="text-xs text-gray-600">Korrekt</p>
+                                <p class="text-2xl font-bold text-blue-600">${session.correct}</p>
+                            </div>
+                            <div class="p-3 bg-red-100 rounded text-center">
+                                <p class="text-xs text-gray-600">Falsch</p>
+                                <p class="text-2xl font-bold text-red-600">${session.total - session.correct}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 bg-gray-100 rounded text-center mb-6">
+                            <p class="text-xs text-gray-600">Erfolgsquote</p>
+                            <p class="text-3xl font-extrabold text-gray-800">${session.successRate}%</p>
+                            ${session.grade ? `<p class="text-sm text-gray-600 mt-2">Note: <span class="font-bold text-lg">${session.grade}</span></p>` : ''}
+                        </div>
+                        
+                        <h4 class="text-lg font-bold text-gray-800 mb-3 border-t pt-3">Gelernte Vokabeln:</h4>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                `;
+                
+                if (session.details && session.details.length > 0) {
+                    session.details.forEach(detail => {
+                        const statusColor = detail.isCorrect ? 'bg-green-100 border-green-400' : 'bg-red-100 border-red-400';
+                        const statusIcon = detail.isCorrect ? '✅' : '❌';
+                        const statusText = detail.isCorrect ? 'Richtig' : 'Falsch';
+                        
+                        html += `
+                            <div class="p-3 rounded border-l-4 ${statusColor}">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="font-bold text-gray-800">${detail.german}</span>
+                                    <span class="text-sm font-bold">${statusIcon} ${statusText}</span>
+                                </div>
+                                <div class="text-sm text-gray-700">
+                                    <span class="font-semibold">Antwort:</span> ${detail.english}
+                                </div>
+                                ${detail.userAnswer ? `<div class="text-sm text-gray-600 mt-1">
+                                    <span class="font-semibold">Deine Antwort:</span> ${detail.userAnswer}
+                                </div>` : ''}
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<div class="text-center text-gray-400 py-4">Keine Details verfügbar</div>';
+                }
+                
+                html += `
+                        </div>
+                        <button class="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition" onclick="closeSessionModal()">
+                            ← Zurück
+                        </button>
+                    </div>
+                `;
+                
+                // Zeige Modal
+                const modal = document.getElementById('session-details-modal');
+                if (modal) {
+                    modal.querySelector('#session-details-content').innerHTML = html;
+                    modal.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('Fehler beim Anzeigen der Session-Details:', e);
+            }
+        };
+
+        window.closeSessionModal = function() {
+            const modal = document.getElementById('session-details-modal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        };
 
         // **NEUE FUNKTION: Rendert das Progress-Chart**
         function renderProgressChart() {
@@ -2986,6 +3361,178 @@
             } catch (e) {
                 console.error('Fehler beim Zurücksetzen auf Werkseinstellungen:', e);
                 alert('❌ Fehler beim Zurücksetzen der Daten. Bitte prüfen Sie die Konsole.');
+            }
+        }
+
+        // ----------------------------------------------------------------------
+        // 10.6 Testplan-Kalender
+        // ----------------------------------------------------------------------
+        
+        function loadScheduledTests() {
+            try {
+                const stored = localStorage.getItem(SCHEDULED_TESTS_KEY);
+                return stored ? JSON.parse(stored) : [];
+            } catch (e) {
+                console.error('Fehler beim Laden der geplanten Tests:', e);
+                return [];
+            }
+        }
+
+        function saveScheduledTests(tests) {
+            try {
+                localStorage.setItem(SCHEDULED_TESTS_KEY, JSON.stringify(tests));
+            } catch (e) {
+                console.error('Fehler beim Speichern der geplanten Tests:', e);
+            }
+        }
+
+        window.addScheduledTest = function(dateStr) {
+            // Wenn keine Datum übergeben, nichts tun
+            if (!dateStr) return;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const testDate = new Date(dateStr);
+
+            if (testDate < today) {
+                alert('❌ Das Datum liegt in der Vergangenheit');
+                return;
+            }
+
+            const tests = loadScheduledTests();
+
+            if (tests.find(t => t.date === dateStr)) {
+                alert('⚠️ Für diesen Tag existiert bereits ein Test');
+                return;
+            }
+
+            tests.push({
+                date: dateStr,
+                progress: 0,
+                createdAt: new Date().toISOString()
+            });
+
+            saveScheduledTests(tests);
+            renderTestCalendar();
+            updateCalendarCountdown();
+        };
+
+        window.handleCalendarDayClick = function(dateStr) {
+            const tests = loadScheduledTests();
+            const hasTest = tests.find(t => t.date === dateStr);
+            
+            if (hasTest) {
+                // Wenn bereits ein Test existiert, zeige Optionen
+                return;
+            }
+            
+            // Wenn kein Test, füge einen hinzu
+            addScheduledTest(dateStr);
+        };
+
+        window.removeScheduledTest = function(dateStr) {
+            if (!confirm(`Test am ${new Date(dateStr).toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} löschen?`)) return;
+            
+            let tests = loadScheduledTests();
+            tests = tests.filter(t => t.date !== dateStr);
+            saveScheduledTests(tests);
+            renderTestCalendar();
+            updateCalendarCountdown();
+        };
+
+        window.updateTestProgress = function(dateStr, progress) {
+            let tests = loadScheduledTests();
+            const test = tests.find(t => t.date === dateStr);
+            if (test) {
+                test.progress = Math.min(100, Math.max(0, progress));
+                saveScheduledTests(tests);
+                renderTestCalendar();
+            }
+        };
+
+        function renderTestCalendar() {
+            const container = document.getElementById('weekCalendarContainer');
+            const tests = loadScheduledTests();
+            const testMap = {};
+            
+            tests.forEach(test => {
+                testMap[test.date] = test;
+            });
+
+            container.innerHTML = '';
+
+            // Berechne Montag dieser Woche
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const diff = today.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const monday = new Date(today.setDate(diff));
+            monday.setHours(0, 0, 0, 0);
+
+            const weekDays = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+            const today_check = new Date();
+            today_check.setHours(0, 0, 0, 0);
+
+            // Erstelle 7 Tage (Montag - Sonntag)
+            for (let i = 0; i < 7; i++) {
+                const currentDate = new Date(monday);
+                currentDate.setDate(currentDate.getDate() + i);
+                const dateStr = currentDate.toISOString().split('T')[0];
+                const dayNum = currentDate.getDate();
+                const weekDay = weekDays[i];
+                
+                const hasTest = testMap[dateStr];
+                const isToday = currentDate.getTime() === today_check.getTime();
+                const progress = hasTest ? (hasTest.progress || 0) : 0;
+
+                let dayCard = `
+                    <div class="flex flex-col items-center p-3 rounded-2xl border-2 transition-all cursor-pointer hover:shadow-md ${
+                        isToday ? 'bg-yellow-50 border-yellow-400 shadow-lg' : (hasTest ? 'bg-blue-100 border-blue-400' : 'bg-gray-50 border-gray-200 hover:border-gray-300')
+                    }" onclick="handleCalendarDayClick('${dateStr}')">
+                        <p class="text-xs font-bold text-gray-700 mb-1">${weekDay}</p>
+                        <p class="text-2xl font-extrabold text-gray-800 mb-2">${dayNum}</p>
+                `;
+
+                if (hasTest) {
+                    dayCard += `
+                        <div class="w-full">
+                            <p class="text-xs text-center font-bold text-blue-600 mb-1">📝 Test</p>
+                            <div class="w-full bg-gray-300 rounded-full h-1.5 mb-2">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-600 h-1.5 rounded-full" style="width: ${progress}%"></div>
+                            </div>
+                            <p class="text-xs text-center font-bold text-blue-600">${progress}%</p>
+                            <button onclick="event.stopPropagation(); removeScheduledTest('${dateStr}')" class="mt-1 text-red-500 hover:text-red-700 text-xs font-bold">✕</button>
+                        </div>
+                    `;
+                } else {
+                    dayCard += `<p class="text-xs text-gray-400">+ Test</p>`;
+                }
+
+                dayCard += `</div>`;
+                container.innerHTML += dayCard;
+            }
+        }
+
+        function updateCalendarCountdown() {
+            const tests = loadScheduledTests();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (tests.length === 0) {
+                document.getElementById('nextTestCountdown').textContent = '-';
+                return;
+            }
+
+            tests.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const nextTest = tests[0];
+            const nextDate = new Date(nextTest.date);
+            const daysUntil = Math.ceil((nextDate - today) / (1000 * 60 * 60 * 24));
+
+            if (daysUntil <= 0) {
+                document.getElementById('nextTestCountdown').textContent = 'HEUTE! 🎯';
+            } else if (daysUntil === 1) {
+                document.getElementById('nextTestCountdown').textContent = 'Morgen';
+            } else {
+                document.getElementById('nextTestCountdown').textContent = `${daysUntil} Tage`;
             }
         }
 
