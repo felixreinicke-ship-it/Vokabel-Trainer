@@ -293,6 +293,7 @@
                     <canvas id="progressChart"></canvas>
                 </div>
                 <p class="mt-4 text-sm text-gray-600 text-center">Zeigt deine täglichen Vokabel-Trainings über die Zeit</p>
+                <p class="mt-2 text-xs text-gray-500 text-center italic">💡 Gezählt: nur korrekt markierte Vokabeln pro Tag</p>
             </div>
         </div>
         
@@ -555,11 +556,19 @@
                     </button>
                 </div>
 
+                <div class="p-6 bg-green-50 rounded-xl border-4 border-green-300 shadow-lg mt-4">
+                    <h3 class="text-xl font-bold text-green-700 mb-3">📚 Nur Vokabeln zurücksetzen</h3>
+                    <p class="text-gray-700 mb-4">Lädt nur die Standard-Vokabeln (~36 Einträge). Ihr Trainingsfortschritt bleibt erhalten.</p>
+                    <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="confirmResetVocabularyOnly()">
+                        📚 Vokabeln auf Standard zurücksetzen
+                    </button>
+                </div>
+
                 <div class="p-6 bg-yellow-50 rounded-xl border-4 border-yellow-300 shadow-lg mt-4">
-                    <h3 class="text-xl font-bold text-yellow-700 mb-3">🔁 Werkseinstellungen (Standard-Vokabeln laden)</h3>
+                    <h3 class="text-xl font-bold text-yellow-700 mb-3">🔁 Werkseinstellungen (alles zurücksetzen)</h3>
                     <p class="text-gray-700 mb-4">Setzt Fortschritte zurück und lädt die Standard-Vokabeln (~36 Einträge). Die App bleibt betriebsbereit.</p>
                     <button id="resetDefaultsButton" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="confirmResetToDefaults()">
-                        🔁 Auf Standard zurücksetzen (nur Default-Vokabeln)
+                        🔁 Alles zurücksetzen (Fortschritt + Vokabeln)
                     </button>
                 </div>
 
@@ -569,6 +578,14 @@
                         <p><strong>Gesamtzahl Vokabeln:</strong> <span id="total-vocabs">0</span></p>
                         <p><strong>Letztes Training:</strong> <span id="last-trained">Noch nicht trainiert</span></p>
                         <p><strong>Trainingssitzungen:</strong> <span id="training-sessions">0</span></p>
+                    </div>
+                </div>
+
+                <div class="p-6 bg-purple-50 rounded-xl border-4 border-purple-300 shadow-lg">
+                    <h3 class="text-xl font-bold text-purple-700 mb-3">📝 Trainings-Log</h3>
+                    <p class="text-sm text-gray-600 mb-3">Letzte Trainings mit Zeitstempel, korrekten Antworten und Erfolgsquote:</p>
+                    <div id="training-log-container" class="text-gray-700">
+                        <!-- Wird von renderTrainingLog() gefüllt -->
                     </div>
                 </div>
 
@@ -814,6 +831,8 @@
         const PROGRESS_KEY = 'vokabeltrainer_v19_progress';
         const TRAINING_SESSIONS_KEY = 'vokabeltrainer_v19_sessions';
         const LAST_TRAINED_KEY = 'vokabeltrainer_v19_last_trained';
+        // **NEU: Detailliertes Trainings-Log mit Zeitstempel und Ergebnissen**
+        const TRAINING_LOG_KEY = 'vokabeltrainer_v19_training_log';
         
         // **ENTFERNT: BOX_TRAIN_DATE_KEY - DIESE KONSTANTE WIRD NICHT MEHR BENÖTIGT.**
 
@@ -1773,6 +1792,11 @@
         
         // **NEUE FUNKTION: Bricht das aktuelle Training ab und setzt alles zurück**
         window.cancelTraining = function() {
+            // Speichere die Trainings-Session wenn mindestens eine Vokabel beantwortet wurde
+            if (correctAnswersCount > 0 || initialDeckSize > 0) {
+                recordTrainingSession();
+            }
+            
             // Trainings-Zustand zurücksetzen
             cards = [];
             currentCardIndex = 0;
@@ -2541,20 +2565,41 @@
                 let progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]');
                 const today = new Date().toISOString().split('T')[0];
                 
-                // Überprüfe, ob heute schon ein Eintrag existiert
+                // Überprüfe, ob heute schon ein Eintrag existiert (aufsummieren statt überschreiben)
                 const todayEntry = progress.find(p => p.date === today);
                 if (todayEntry) {
-                    todayEntry.sessions++;
-                    todayEntry.vocabs = correctAnswersCount;
+                    todayEntry.sessions = (todayEntry.sessions || 0) + 1;
+                    todayEntry.vocabs = (todayEntry.vocabs || 0) + (Number(correctAnswersCount) || 0);
                 } else {
                     progress.push({
                         date: today,
                         sessions: 1,
-                        vocabs: correctAnswersCount
+                        vocabs: Number(correctAnswersCount) || 0
                     });
                 }
                 
                 localStorage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+                
+                // **NEU: Speichere detailliertes Trainings-Log mit Zeitstempel**
+                let log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
+                const now = new Date();
+                const timestamp = now.toLocaleString('de-DE', { 
+                    year: 'numeric', 
+                    month: '2-digit', 
+                    day: '2-digit', 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                log.push({
+                    timestamp: timestamp,
+                    correct: Number(correctAnswersCount) || 0,
+                    total: Number(initialDeckSize) || 0,
+                    successRate: initialDeckSize > 0 ? ((correctAnswersCount / initialDeckSize) * 100).toFixed(1) : '0'
+                });
+                
+                localStorage.setItem(TRAINING_LOG_KEY, JSON.stringify(log));
             } catch (e) {
                 console.error('Fehler beim Speichern der Trainingsstatistiken:', e);
             }
@@ -2575,39 +2620,97 @@
                 
                 const sessionCount = localStorage.getItem(TRAINING_SESSIONS_KEY);
                 if (sessions) sessions.textContent = sessionCount || '0';
+                
+                // Rendere das Trainings-Log
+                renderTrainingLog();
             } catch (e) {
                 console.error('Fehler beim Aktualisieren der Statistiken:', e);
+            }
+        }
+
+        // **NEUE FUNKTION: Rendert das Trainings-Log**
+        function renderTrainingLog() {
+            try {
+                const container = document.getElementById('training-log-container');
+                if (!container) return; // Container existiert noch nicht im HTML
+                
+                const log = JSON.parse(localStorage.getItem(TRAINING_LOG_KEY) || '[]');
+                
+                if (log.length === 0) {
+                    container.innerHTML = '<div class="text-center text-gray-400 py-4">Noch keine Trainings-Einträge</div>';
+                    return;
+                }
+                
+                // Soriere Log in umgekehrter Reihenfolge (neueste zuerst) und begrenzte auf die letzten 20
+                const sortedLog = log.slice().reverse().slice(0, 20);
+                
+                let html = '<div class="space-y-2 max-h-96 overflow-y-auto">';
+                sortedLog.forEach(entry => {
+                    const successRate = parseFloat(entry.successRate || 0);
+                    let bgColor = 'bg-red-100';
+                    let textColor = 'text-red-700';
+                    
+                    if (successRate >= 80) {
+                        bgColor = 'bg-green-100';
+                        textColor = 'text-green-700';
+                    } else if (successRate >= 50) {
+                        bgColor = 'bg-yellow-100';
+                        textColor = 'text-yellow-700';
+                    }
+                    
+                    html += `<div class="p-3 rounded ${bgColor} ${textColor} text-sm">
+                        <div class="font-medium">${entry.timestamp}</div>
+                        <div class="text-xs mt-1">${entry.correct}/${entry.total} richtig | ${entry.successRate}%</div>
+                    </div>`;
+                });
+                html += '</div>';
+                
+                container.innerHTML = html;
+            } catch (e) {
+                console.error('Fehler beim Rendern des Trainings-Logs:', e);
             }
         }
 
         // **NEUE FUNKTION: Rendert das Progress-Chart**
         function renderProgressChart() {
             try {
+                // Lade gespeicherte Fortschrittsdaten (array von {date: 'YYYY-MM-DD', sessions: N, vocabs: M})
                 let progress = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]');
-                
-                if (progress.length === 0) {
-                    const ctx = document.getElementById('progressChart');
-                    if (ctx) {
-                        ctx.getContext('2d').clearRect(0, 0, ctx.width, ctx.height);
-                        const parentDiv = ctx.parentElement;
-                        parentDiv.innerHTML = '<p class="text-center text-gray-500 py-12">Keine Daten vorhanden. Starten Sie mit dem Training!</p>';
-                    }
-                    return;
+
+                // Erstelle Zeitachse: letzte 30 Tage (inkl. heute)
+                const DAYS = 30;
+                const labels = [];
+                const countsMap = {};
+                for (let i = DAYS - 1; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const iso = d.toISOString().split('T')[0];
+                    labels.push(d.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' }));
+                    countsMap[iso] = 0;
                 }
 
-                // Sortiere nach Datum
-                progress.sort((a, b) => new Date(a.date) - new Date(b.date));
-                
-                // Nimm die letzten 30 Einträge
-                progress = progress.slice(-30);
-                
-                const dates = progress.map(p => {
-                    const date = new Date(p.date);
-                    return date.toLocaleDateString('de-DE', { month: 'short', day: 'numeric' });
-                });
-                
-                const vocabCounts = progress.map(p => p.vocabs || 0);
-                const sessionCounts = progress.map(p => p.sessions || 1);
+                // Summiere vorhandene Progress-Daten pro Tag
+                if (Array.isArray(progress) && progress.length > 0) {
+                    progress.forEach(p => {
+                        if (!p || !p.date) return;
+                        // p.date wird als 'YYYY-MM-DD' gespeichert
+                        const key = p.date;
+                        const val = Number(p.vocabs) || 0;
+                        if (countsMap.hasOwnProperty(key)) {
+                            countsMap[key] += val;
+                        }
+                    });
+                }
+
+                // Baue das Array für Chart-Daten in der gleichen Reihenfolge wie labels
+                const vocabCounts = [];
+                const now = new Date();
+                for (let i = DAYS - 1; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const iso = d.toISOString().split('T')[0];
+                    vocabCounts.push(countsMap[iso] || 0);
+                }
 
                 const ctx = document.getElementById('progressChart');
                 if (!ctx) return;
@@ -2620,7 +2723,7 @@
                 window.progressChartInstance = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: dates,
+                        labels: labels,
                         datasets: [
                             {
                                 label: 'Gelernte Vokabeln pro Tag',
@@ -2805,6 +2908,7 @@
                 localStorage.removeItem(TRAINING_SESSIONS_KEY);
                 localStorage.removeItem(LAST_TRAINED_KEY);
                 localStorage.removeItem(DIRECTION_KEY);
+                localStorage.removeItem(TRAINING_LOG_KEY);
                 
                 // Reload die Seite
                 alert('✅ Datenbank erfolgreich gelöscht! Die Seite wird neu geladen.');
@@ -2814,6 +2918,39 @@
             }
         }
         
+        // ---------- NEU: Nur Vokabeln zurücksetzen (Fortschritt bleibt) ----------
+        window.confirmResetVocabularyOnly = function() {
+            const confirmed = confirm('Möchten Sie wirklich nur die Vokabeln auf die Standard-Vokabeln zurücksetzen? Ihr Trainingsfortschritt bleibt erhalten.');
+            if (!confirmed) return;
+            resetVocabularyOnly();
+        }
+
+        function resetVocabularyOnly() {
+            try {
+                // Schreibe nur die DEFAULT_VOCABULARY in den Storage
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_VOCABULARY));
+
+                // NICHT löschen: Fortschritt, Sessions, Logs, etc.
+                // Setze nur die Kasten-Auswahl auf Standard (Box 1)
+                localStorage.setItem(SELECTED_BOXES_KEY, JSON.stringify([1]));
+
+                // Lade die Vokabeln neu in die Laufzeit-Variable
+                loadVocabulary();
+                saveSelectedBoxes();
+
+                // UI-Aktualisierungen
+                try { renderBoxStatsHome(); } catch(e) {}
+                try { renderBoxStats(); } catch(e) {}
+                try { updateSettingsStats(); } catch(e) {}
+
+                alert('✅ Vokabeln wurden zurückgesetzt. Ihr Trainingsfortschritt bleibt erhalten.');
+                showView('home');
+            } catch (e) {
+                console.error('Fehler beim Zurücksetzen der Vokabeln:', e);
+                alert('❌ Fehler beim Zurücksetzen der Vokabeln. Bitte prüfen Sie die Konsole.');
+            }
+        }
+
         // ---------- NEU: Werkseinstellungen zurücksetzen (Default-Vokabeln laden) ----------
         window.confirmResetToDefaults = function() {
             const confirmed = confirm('Möchten Sie wirklich alle Fortschrittsdaten zurücksetzen und die Standard-Vokabeln laden?');
@@ -2830,6 +2967,7 @@
                 localStorage.removeItem(PROGRESS_KEY);
                 localStorage.removeItem(TRAINING_SESSIONS_KEY);
                 localStorage.removeItem(LAST_TRAINED_KEY);
+                localStorage.removeItem(TRAINING_LOG_KEY);
 
                 // Setze Auswahl der Boxen auf Standard (Box 1)
                 localStorage.setItem(SELECTED_BOXES_KEY, JSON.stringify([1]));
