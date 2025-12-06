@@ -227,6 +227,7 @@
             border-color: #3b82f6;
         }
     </style>
+<link rel="stylesheet" href="/index.css">
 </head>
 <body class="p-4 md:p-8">
 
@@ -262,8 +263,11 @@
                     <button class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('games')">
                         🎮 Vokabel Spiele
                     </button>
-                    <button class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('manage')">
-                        ⚙️ Vokabeln hinzufügen & verwalten
+                    <button class="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('add')">
+                        ➕ Vokabeln hinzufügen
+                    </button>
+                    <button class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('manage')">
+                        📚 Vokabeln verwalten
                     </button>
                     <button class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg transition-transform duration-150 active:scale-95" onclick="showView('settings')">
                         ⚡ Einstellungen
@@ -487,8 +491,8 @@
             </div>
         </div>
 
-        <div id="manage-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
-            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">⚙️ Vokabeln hinzufügen & verwalten</h2>
+        <div id="add-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">➕ Vokabeln hinzufügen</h2>
             
             <div class="p-6 bg-blue-50 rounded-xl border-4 border-blue-300 shadow-lg mb-8">
                 <h3 class="text-xl font-bold text-blue-700 mb-4">➕ Manuell Vokabeln hinzufügen</h3>
@@ -554,6 +558,89 @@
             
         </div>
 
+        <div id="manage-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📚 Vokabeln verwalten</h2>
+            
+            <!-- Ordner-Navigation -->
+            <div class="mb-6 space-y-3">
+                <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-300 cursor-pointer hover:bg-blue-100" onclick="loadVocabularFolder('laras')">
+                    <h3 class="text-lg font-bold text-blue-700">📁 Lara's Englisch Vokabeln</h3>
+                    <p class="text-sm text-blue-600">Vokabeln aus Laras Sammlung</p>
+                </div>
+                <div class="p-4 bg-purple-50 rounded-lg border-2 border-purple-300 cursor-pointer hover:bg-purple-100" onclick="loadVocabularFolder('livingandworking')">
+                    <h3 class="text-lg font-bold text-purple-700">📁 Englisch Living and working abroad</h3>
+                    <p class="text-sm text-purple-600">Vokabeln zum Thema Leben und Arbeiten im Ausland</p>
+                </div>
+            </div>
+            
+            <!-- Vokabelliste mit Verwaltungsfunktionen -->
+            <div class="p-6 bg-gray-50 rounded-xl border-4 border-gray-300 shadow-lg">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">📖 Vokabelliste</h3>
+                
+                <!-- Auswahlspalte Buttons -->
+                <div class="flex gap-3 mb-4">
+                    <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-lg" onclick="toggleSelectAllVocabs()">
+                        ☑️ Alle auswählen/abwählen
+                    </button>
+                    <button class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-lg" onclick="deleteSelectedVocabs()">
+                        🗑️ Ausgewählte löschen
+                    </button>
+                </div>
+                
+                <!-- Vokabelliste mit Scrollbar (max 10 Einträge pro Seite) -->
+                <div id="manage-vocab-list" class="space-y-2 max-h-96 overflow-y-auto border border-gray-200 p-3 rounded-lg bg-white">
+                    <!-- Wird von renderManageVocabList() gefüllt -->
+                </div>
+                
+                <p class="text-sm text-gray-600 mt-3 text-center">Wählen Sie Vokabeln aus und klicken Sie auf "Ausgewählte löschen" zum Löschen.</p>
+            </div>
+            
+            <button class="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-transform active:scale-95" onclick="showView('home')">
+                ← Zurück zur Startseite
+            </button>
+        </div>
+        
+        <!-- NEU: Lara's View -->
+        <div id="lara-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📁 Lara's Englisch Vokabeln</h2>
+            
+            <!-- Module 1 -->
+            <div class="mb-8 p-6 bg-indigo-50 rounded-xl border-4 border-indigo-300 shadow-lg">
+                <h3 class="text-xl font-bold text-indigo-800 mb-4">S.216 Check in</h3>
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-lg" onclick="showModuleList('checkin')">
+                        📋 Vokabelliste anzeigen
+                    </button>
+                    <button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-lg" onclick="showModuleImage('checkin')">
+                        🖼️ Vokabelseite anzeigen
+                    </button>
+                </div>
+                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-transform active:scale-95" onclick="addAllModuleVocabs('checkin')">
+                    ➕ Alle Vokabeln hinzufügen
+                </button>
+            </div>
+
+            <!-- Module 2 -->
+            <div class="mb-8 p-6 bg-pink-50 rounded-xl border-4 border-pink-300 shadow-lg">
+                <h3 class="text-xl font-bold text-pink-800 mb-4">S. 2016-2017 Station 1</h3>
+                <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                    <button class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded-lg" onclick="showModuleList('station1')">
+                        📋 Vokabelliste anzeigen
+                    </button>
+                    <button class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded-lg" onclick="showModuleImage('station1')">
+                        🖼️ Vokabelseite anzeigen
+                    </button>
+                </div>
+                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-transform active:scale-95" onclick="addAllModuleVocabs('station1')">
+                    ➕ Alle Vokabeln hinzufügen
+                </button>
+            </div>
+
+            <button class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl" onclick="showView('manage')">
+                ← Zurück zur Verwaltung
+            </button>
+        </div>
+
         <div id="edit-vocab-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">✏️ Vokabel bearbeiten</h2>
@@ -575,6 +662,50 @@
                         <button class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg" onclick="closeEditVocabModal()">❌ Abbrechen</button>
                     </div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- Modals for Lara's Modules -->
+        <div id="module-list-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b pb-3">
+                    <h2 class="text-2xl font-bold text-gray-800" id="module-list-title">Modul Liste</h2>
+                    <button onclick="closeModuleListModal()" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+                </div>
+                <div class="overflow-y-auto flex-1 p-2">
+                     <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deutsch</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Englisch</th>
+                            </tr>
+                        </thead>
+                        <tbody id="module-list-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Content generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <button class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl" onclick="closeModuleListModal()">
+                    Schließen
+                </button>
+            </div>
+        </div>
+
+        <div id="module-image-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-xl shadow-2xl p-4 max-w-4xl w-full mx-4 max-h-[95vh] flex flex-col">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-xl font-bold text-gray-800" id="module-image-title">Vokabelseite</h2>
+                    <button onclick="closeModuleImageModal()" class="text-gray-500 hover:text-gray-700 text-2xl font-bold">&times;</button>
+                </div>
+                <div class="flex-1 overflow-auto bg-gray-100 rounded-lg flex items-center justify-center p-2 relative">
+                    <img id="module-image-src" src="" alt="Vokabelseite" class="max-w-full h-auto shadow-md">
+                    <p class="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-500 bg-white bg-opacity-70 p-1">
+                        Hinweis: Stellen Sie sicher, dass das Bild im gleichen Ordner liegt (z.B. "checkin.jpg").
+                    </p>
+                </div>
+                <button class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl" onclick="closeModuleImageModal()">
+                    Schließen
+                </button>
             </div>
         </div>
 
@@ -778,44 +909,44 @@
         const NUM_BOXES = 5; 
         
         // Basis-Vokabeln, die nur beim ERSTEN Start verwendet werden, falls kein Local Storage vorhanden ist.
-        // **NEU: Jede Vokabel erhält beim ersten Start die Eigenschaft 'box: 1'**
+        // **REPARIERT: Deutsch und Englisch wurden korrigiert und stehen jetzt in den richtigen Feldern**
         const DEFAULT_VOCABULARY = [
-            { german: "to adjust (to)", english: "einstellen, anpassen (an)", example: "It is still hard for me to adjust to living on the countryside.", box: 1 },
-            { german: "response", english: "Antwort, Reaktion", example: "His sharp response confused me.", box: 1 },
-            { german: "antidote", english: "Gegenmittel, Gegengift", example: "For Stephanie, riding the motorcycle on the weekend is the perfect antidote to the boredom of her office job.", box: 1 },
-            { german: "cabin fever", english: "Lagerkoller, Gefühl der Beengtheit", example: "I easily suffer from cabin fever if I stay indoors for too long.", box: 1 },
-            { german: "to mock", english: "(ver)spotten, (ver)höhnen", example: "The popular students mocked the students who were bad at sport.", box: 1 },
-            { german: "wisdom (no pl)", english: "Weisheit, Klugheit", example: "I always admired my grandfather's wisdom.", box: 1 },
-            { german: "itinerary", english: "Reiseroute, Reiseplan", example: "When travelling on your own, it is a good idea to plan your itinerary in advance.", box: 1 },
-            { german: "a kernel of truth", english: "ein Körnchen Wahrheit", example: "I thought his speech was full of exaggerations, nonetheless there was a kernel of truth in what he said.", box: 1 },
-            { german: "stretch", english: "Zeitraum, (Strecken)abschnitt, Stück", example: "The final stretch of the season was very exhausting for the players.", box: 1 },
-            { german: "crammed", english: "vollgestopft", example: "No wonder: the suitcase won't close – look how crammed it is!", box: 1 },
-            { german: "to tempt sb", english: "jdn in Versuchung führen", example: "Can I tempt you into eating meat with one of my delicious sausage rolls?", box: 1 },
-            { german: "to long for sth", english: "sich nach etw sehnen", example: "I always long for the summer holidays.", box: 1 },
-            { german: "handy", english: "praktisch, nützlich, griffbereit", example: "This tool is very handy when you need to join two pieces of wood or metal.", box: 1 },
-            { german: "to fast forward (no pl)", english: "vorspulen", example: "Sometimes, I wish I could fast forward to the future.", box: 1 },
-            { german: "tight", english: "fest, eng, hier: knapp", example: "My budget for this year's holiday is very tight, I wish I had saved more money.", box: 1 },
-            { german: "minimum wage (no pl)", english: "Mindestlohn", example: "Last year, the minimum wage was raised by the government.", box: 1 },
-            { german: "attendant", english: "Aufseher/in, Wärter/in, hier: Bademeister/in", example: "Last summer, my brother worked as an attendant at the local swimming pool.", box: 1 },
-            { german: "aside from", english: "abgesehen von", example: "Aside from my summer job, I also receive a bit of money from my parents.", box: 1 },
-            { german: "suburbia (no pl)", english: "Vororte, Randbezirke", example: "Suburbia is a term often used to connote the attitudes and habits of people living in the suburbs.", box: 1 },
-            { german: "facility", english: "Anlage, Einrichtung", example: "There are a few recreational facilities near our place.", box: 1 },
-            { german: "to cease", english: "(be)enden, aufhören", example: "At noon, the rain had suddenly ceased.", box: 1 },
-            { german: "consequential", english: "folgerichtig, wichtig", example: "Did you make any consequential changes to the schedule since we last met?", box: 1 },
-            { german: "burdensome", english: "belastend, mühsam, lästig", example: "My job has become quite burdensome in recent years.", box: 1 },
-            { german: "post-graduate", english: "nach beendetem Studium", example: "After university, I spend my first post-graduate year doing odd jobs.", box: 1 },
-            { german: "to loom", english: "(drohend) auftauchen", example: "Look at those storm clouds looming on the horizon – it will rain pretty soon, I think!", box: 1 },
-            { german: "to shed/throw light on sth", english: "Aufschluss über etw geben", example: "The article sheds light on the problem of homelessness.", box: 1 },
-            { german: "to investigate", english: "untersuchen, nachgehen", example: "The police investigated the murder case.", box: 1 },
-            { german: "beneficial", english: "nützlich, vorteilhaft", example: "It is sometimes beneficial to include a diagram when trying to explain something.", box: 1 },
-            { german: "to be in demand", english: "gefragt sein", example: "Shortly after the pandemic, face masks started to be in demand.", box: 1 },
-            { german: "to omit", english: "außer Acht lassen, auslassen, unterlassen", example: "I will omit any information I find unnecessary.", box: 1 },
-            { german: "pamphlet", english: "(kleine) Broschüre, Faltblatt, Pamphlet", example: "Can you help me design a short pamphlet for my German class?", box: 1 },
-            { german: "plus", english: "darüber hinaus, zusätzlich, außerdem", example: "I'm not very good at sports. Plus, I have recently sprained my ankle.", box: 1 },
-            { german: "fellow", english: "Mit..., ...genosse/genossin, Kollege/Kollegin", example: "My fellow colleagues also complained about their work.", box: 1 },
-            { german: "fruitful", english: "fruchtbar, ertragreich, hier: lohnend", example: "My year abroad turned out to be very fruitful.", box: 1 },
-            { german: "to flounder", english: "stolpern, strampeln, sich abmühen", example: "During the speech, the mayor suddenly started to flounder.", box: 1 },
-            { german: "to graduate", english: "einen (Universitäts)abschluss erwerben", example: "I want to graduate with a good grade.", box: 1 }
+            { german: "einstellen, anpassen (an)", english: "to adjust (to)", example: "It is still hard for me to adjust to living on the countryside.", box: 1 },
+            { german: "Antwort, Reaktion", english: "response", example: "His sharp response confused me.", box: 1 },
+            { german: "Gegenmittel, Gegengift", english: "antidote", example: "For Stephanie, riding the motorcycle on the weekend is the perfect antidote to the boredom of her office job.", box: 1 },
+            { german: "Lagerkoller, Gefühl der Beengtheit", english: "cabin fever", example: "I easily suffer from cabin fever if I stay indoors for too long.", box: 1 },
+            { german: "(ver)spotten, (ver)höhnen", english: "to mock", example: "The popular students mocked the students who were bad at sport.", box: 1 },
+            { german: "Weisheit, Klugheit", english: "wisdom (no pl)", example: "I always admired my grandfather's wisdom.", box: 1 },
+            { german: "Reiseroute, Reiseplan", english: "itinerary", example: "When travelling on your own, it is a good idea to plan your itinerary in advance.", box: 1 },
+            { german: "ein Körnchen Wahrheit", english: "a kernel of truth", example: "I thought his speech was full of exaggerations, nonetheless there was a kernel of truth in what he said.", box: 1 },
+            { german: "Zeitraum, (Strecken)abschnitt, Stück", english: "stretch", example: "The final stretch of the season was very exhausting for the players.", box: 1 },
+            { german: "vollgestopft", english: "crammed", example: "No wonder: the suitcase won't close – look how crammed it is!", box: 1 },
+            { german: "jdn in Versuchung führen", english: "to tempt sb", example: "Can I tempt you into eating meat with one of my delicious sausage rolls?", box: 1 },
+            { german: "sich nach etw sehnen", english: "to long for sth", example: "I always long for the summer holidays.", box: 1 },
+            { german: "praktisch, nützlich, griffbereit", english: "handy", example: "This tool is very handy when you need to join two pieces of wood or metal.", box: 1 },
+            { german: "vorspulen", english: "to fast forward (no pl)", example: "Sometimes, I wish I could fast forward to the future.", box: 1 },
+            { german: "fest, eng, hier: knapp", english: "tight", example: "My budget for this year's holiday is very tight, I wish I had saved more money.", box: 1 },
+            { german: "Mindestlohn", english: "minimum wage (no pl)", example: "Last year, the minimum wage was raised by the government.", box: 1 },
+            { german: "Aufseher/in, Wärter/in, hier: Bademeister/in", english: "attendant", example: "Last summer, my brother worked as an attendant at the local swimming pool.", box: 1 },
+            { german: "abgesehen von", english: "aside from", example: "Aside from my summer job, I also receive a bit of money from my parents.", box: 1 },
+            { german: "Vororte, Randbezirke", english: "suburbia (no pl)", example: "Suburbia is a term often used to connote the attitudes and habits of people living in the suburbs.", box: 1 },
+            { german: "Anlage, Einrichtung", english: "facility", example: "There are a few recreational facilities near our place.", box: 1 },
+            { german: "(be)enden, aufhören", english: "to cease", example: "At noon, the rain had suddenly ceased.", box: 1 },
+            { german: "folgerichtig, wichtig", english: "consequential", example: "Did you make any consequential changes to the schedule since we last met?", box: 1 },
+            { german: "belastend, mühsam, lästig", english: "burdensome", example: "My job has become quite burdensome in recent years.", box: 1 },
+            { german: "nach beendetem Studium", english: "post-graduate", example: "After university, I spend my first post-graduate year doing odd jobs.", box: 1 },
+            { german: "(drohend) auftauchen", english: "to loom", example: "Look at those storm clouds looming on the horizon – it will rain pretty soon, I think!", box: 1 },
+            { german: "Aufschluss über etw geben", english: "to shed/throw light on sth", example: "The article sheds light on the problem of homelessness.", box: 1 },
+            { german: "untersuchen, nachgehen", english: "to investigate", example: "The police investigated the murder case.", box: 1 },
+            { german: "nützlich, vorteilhaft", english: "beneficial", example: "It is sometimes beneficial to include a diagram when trying to explain something.", box: 1 },
+            { german: "gefragt sein", english: "to be in demand", example: "Shortly after the pandemic, face masks started to be in demand.", box: 1 },
+            { german: "außer Acht lassen, auslassen, unterlassen", english: "to omit", example: "I will omit any information I find unnecessary.", box: 1 },
+            { german: "(kleine) Broschüre, Faltblatt, Pamphlet", english: "pamphlet", example: "Can you help me design a short pamphlet for my German class?", box: 1 },
+            { german: "darüber hinaus, zusätzlich, außerdem", english: "plus", example: "I'm not very good at sports. Plus, I have recently sprained my ankle.", box: 1 },
+            { german: "Mit..., ...genosse/genossin, Kollege/Kollegin", english: "fellow", example: "My fellow colleagues also complained about their work.", box: 1 },
+            { german: "fruchtbar, ertragreich, hier: lohnend", english: "fruitful", example: "My year abroad turned out to be very fruitful.", box: 1 },
+            { german: "stolpern, strampeln, sich abmühen", english: "to flounder", example: "During the speech, the mayor suddenly started to flounder.", box: 1 },
+            { german: "einen (Universitäts)abschluss erwerben", english: "to graduate", example: "I want to graduate with a good grade.", box: 1 }
         ];
 
         // Die Haupt-Vokabelliste
@@ -838,8 +969,7 @@
         let trainingSessionDetails = []; 
         // **NEU: Speichert die Boxen, die trainiert werden sollen (Standard: Box 1)**
         let selectedTrainingBoxes = [1]; 
-        // **NEU: Daten-Inversion (falls DEFAULT_VOCABULARY versehentlich vertauschte Felder enthält)**
-        let dataInverted = false;
+        // **ENTFERNT: dataInverted wird nicht mehr benötigt, da die Datenstruktur korrigiert wurde**
 
         // Card direction: 'de->en' shows German and expects English (default)
         const DIRECTION_KEY = 'vokabeltrainer_v19_direction';
@@ -889,9 +1019,14 @@
                     VOCABULARY_BASE = JSON.parse(storedVocab);
                     
                     // **NEU: Füge 'box: 1' zu Vokabeln hinzu, die noch keine Box haben (für ältere Speicherstände)**
-                    VOCABULARY_BASE.forEach(v => {
+                    // **NEU: Generiere eindeutige IDs für alle Vokabeln**
+                    VOCABULARY_BASE.forEach((v, index) => {
                         if (typeof v.box !== 'number' || v.box < 1 || v.box > NUM_BOXES) {
                             v.box = 1; 
+                        }
+                        // Generiere eindeutige ID falls nicht vorhanden
+                        if (!v.id) {
+                            v.id = `vocab_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
                         }
                     });
                     
@@ -907,8 +1042,7 @@
                     selectedTrainingBoxes = JSON.parse(storedBoxes);
                 }
                 
-                // Prüfe, ob die Daten invertiert vorliegen (z.B. german/english Felder vertauscht)
-                try { detectDataInversion(); } catch(e) { console.error('Fehler bei dataInversion check:', e); }
+                // **ENTFERNT: Automatische Inversions-Erkennung entfernt, da Daten jetzt sauber sind.**
                 
             } catch (e) {
                 console.error("Fehler beim Laden der Vokabeln aus Local Storage:", e);
@@ -917,27 +1051,7 @@
             }
         }
 
-        // Prüft, ob die geladenen Vokabelobjekte versehentlich vertauschte Felder haben
-        function detectDataInversion() {
-            try {
-                if (!VOCABULARY_BASE || VOCABULARY_BASE.length === 0) return;
-                const sample = VOCABULARY_BASE.slice(0, Math.min(10, VOCABULARY_BASE.length));
-                let germanHasUmlaut = 0;
-                let englishHasUmlaut = 0;
-                sample.forEach(v => {
-                    if (!v) return;
-                    try {
-                        if (/[äöüßÄÖÜ]/.test(String(v.german))) germanHasUmlaut++;
-                        if (/[äöüßÄÖÜ]/.test(String(v.english))) englishHasUmlaut++;
-                    } catch (e) {}
-                });
-                // Wenn mehr deutsche Zeichen im englisch-Feld vorkommen, ist wahrscheinlich invertiert
-                dataInverted = englishHasUmlaut > germanHasUmlaut;
-                if (dataInverted) console.info('DATA INVERSION detected: german/english fields appear swapped');
-            } catch (e) {
-                console.error('Fehler bei der Erkennung invertierter Daten:', e);
-            }
-        }
+        // **ENTFERNT: detectDataInversion() wurde gelöscht, um Konflikte zwischen alten und neuen Daten zu vermeiden.**
 
         function saveVocabulary() {
             try {
@@ -1173,7 +1287,7 @@
                 submitTestButton.classList.add('hidden');
                 testQuestionsContainer.innerHTML = '';
                 testInfoElement.textContent = `Bereit für den Test? Es werden ${TEST_VOCABULARY_COUNT} zufällige Vokabeln abgefragt.`;
-            } else if (viewId === 'manage') { 
+            } else if (viewId === 'add') { 
                 imagePreviewContainer.classList.add('hidden');
                 extractedListContainer.classList.add('hidden');
                 addStatus.innerHTML = '';
@@ -1194,6 +1308,11 @@
                 } else {
                     scanButton.disabled = true;
                 }
+            } else if (viewId === 'manage') {
+                // Vokabelliste rendern für manage-vocab-view
+                renderManageVocabList();
+                selectedVocabIds.clear();
+                updateSelectAllButtonState();
             } else if (viewId === 'games') {
                  matchItContainer.classList.add('hidden');
                  hangmanContainer.classList.add('hidden');
@@ -1201,6 +1320,8 @@
                  fillInBlankContainer.classList.add('hidden'); 
                  
                  document.querySelectorAll('#games-view button[id^="start-"]').forEach(btn => btn.disabled = false);
+            } else if (viewId === 'lara') {
+                // Initialisierung für Lara View falls nötig
             }
 
              // Hervorheben des aktiven Navigations-Buttons
@@ -1403,13 +1524,17 @@
                     card.german && card.english && card.german.trim() !== '' && card.english.trim() !== ''
                 );
                 // Beispiel-Satz hinzufügen, falls nicht vorhanden (für Fill-in-Blank)
-                validNewCards.forEach(card => {
+                validNewCards.forEach((card, index) => {
                     if (!card.example) {
                         card.example = `You need to learn the English word for "${card.german}". The correct word is [VOCAB].`;
                     }
                     // **NEU: Setze neue Vokabeln in Box 1**
                     if (typeof card.box !== 'number') {
                          card.box = 1; 
+                    }
+                    // **NEU: Generiere eindeutige ID für neue Vokabel**
+                    if (!card.id) {
+                        card.id = `vocab_${Date.now()}_${index}_${Math.random().toString(36).substr(2, 9)}`;
                     }
                 });
                 VOCABULARY_BASE = VOCABULARY_BASE.concat(validNewCards);
@@ -1549,15 +1674,16 @@
                  listFilterInfo.textContent = `Alle Vokabeln werden angezeigt (insgesamt: ${VOCABULARY_BASE.length})`;
             }
             
-            filteredVocab.sort((a, b) => (dataInverted ? a.english.localeCompare(b.english) : a.german.localeCompare(b.german)));
+            // **REPARIERT: Sortierung ohne dataInverted Prüfung**
+            filteredVocab.sort((a, b) => a.german.localeCompare(b.german));
             
             filteredVocab.forEach((card, index) => {
                 const row = vocabularyListBody.insertRow();
                 row.classList.add('hover:bg-gray-50', 'transition-colors');
                 
-                // Bestimme Deutsch und Englisch basierend auf dataInverted
-                const germanText = dataInverted ? card.english : card.german;
-                const englishText = dataInverted ? card.german : card.english;
+                // **REPARIERT: Direkte Zuweisung, da Daten jetzt korrekt sind**
+                const germanText = card.german;
+                const englishText = card.english;
                 
                 let cellGerman = row.insertCell();
                 cellGerman.classList.add('px-6', 'py-4', 'whitespace-nowrap', 'text-sm', 'font-medium', 'text-gray-900');
@@ -1953,28 +2079,15 @@
                 // Verwende die aktuell ausgewählte Richtung aus dem Select (Fallback auf cardDirection)
                 const dir = (directionSelect && directionSelect.value) ? directionSelect.value : cardDirection;
 
-                // Wenn die eingelesenen Daten vertauscht sind (dataInverted), dann sind
-                // 'german' und 'english' Felder in den Objekten vertauscht.
-                // Wir passen Anzeige und Platzhalter entsprechend an.
+                // **REPARIERT: Keine Inversions-Prüfung mehr nötig**
                 if (dir === 'de->en') {
-                    if (!dataInverted) {
-                        frontTextElement.textContent = activeVocab.german;
-                        backTextElement.textContent = activeVocab.english;
-                    } else {
-                        // Daten sind invertiert: english enthält das deutsche Wort
-                        frontTextElement.textContent = activeVocab.english;
-                        backTextElement.textContent = activeVocab.german;
-                    }
+                    frontTextElement.textContent = activeVocab.german;
+                    backTextElement.textContent = activeVocab.english;
                     answerInput.placeholder = 'Englische Antwort';
                     feedbackElement.textContent = 'Gib die englische Übersetzung ein.';
                 } else {
-                    if (!dataInverted) {
-                        frontTextElement.textContent = activeVocab.english;
-                        backTextElement.textContent = activeVocab.german;
-                    } else {
-                        frontTextElement.textContent = activeVocab.german;
-                        backTextElement.textContent = activeVocab.english;
-                    }
+                    frontTextElement.textContent = activeVocab.english;
+                    backTextElement.textContent = activeVocab.german;
                     answerInput.placeholder = 'Deutsche Antwort';
                     feedbackElement.textContent = 'Gib die deutsche Übersetzung ein.';
                 }
@@ -1993,12 +2106,13 @@
             const userAnswer = normalizeAnswer(answerInput.value);
             // Verwende die aktuell ausgewählte Richtung aus dem Select (Fallback auf cardDirection)
             const dir = (directionSelect && directionSelect.value) ? directionSelect.value : cardDirection;
-            // Bestimme die korrekte Antwort unter Berücksichtigung möglicher Daten-Inversion
+            
+            // **REPARIERT: Keine Inversions-Prüfung mehr nötig**
             let correctAnswerRaw;
             if (dir === 'de->en') {
-                correctAnswerRaw = dataInverted ? activeVocab.german : activeVocab.english;
+                correctAnswerRaw = activeVocab.english;
             } else {
-                correctAnswerRaw = dataInverted ? activeVocab.english : activeVocab.german;
+                correctAnswerRaw = activeVocab.german;
             }
             const correctAnswer = normalizeAnswer(correctAnswerRaw);
 
@@ -2122,13 +2236,14 @@
             testQuestions.forEach((q, index) => {
                 let prompt, answerLabel;
                 
+                // **REPARIERT: Keine Inversions-Prüfung mehr nötig**
                 if (testDirection === 'de->en') {
                     // Frage: Deutsch, Antwort: Englisch
-                    prompt = dataInverted ? q.vocab.english : q.vocab.german;
+                    prompt = q.vocab.german;
                     answerLabel = 'Englische Übersetzung:';
                 } else {
                     // Frage: Englisch, Antwort: Deutsch
-                    prompt = dataInverted ? q.vocab.german : q.vocab.english;
+                    prompt = q.vocab.english;
                     answerLabel = 'Deutsche Übersetzung:';
                 }
                 
@@ -2160,13 +2275,14 @@
                 const userAnswer = normalizeAnswer(q.userAnswer);
                 
                 // Bestimme die korrekte Antwort basierend auf testDirection
+                // **REPARIERT: Keine Inversions-Prüfung mehr nötig**
                 let correctAnswerRaw;
                 if (testDirection === 'de->en') {
                     // Antwort sollte Englisch sein
-                    correctAnswerRaw = dataInverted ? q.vocab.german : q.vocab.english;
+                    correctAnswerRaw = q.vocab.english;
                 } else {
                     // Antwort sollte Deutsch sein
-                    correctAnswerRaw = dataInverted ? q.vocab.english : q.vocab.german;
+                    correctAnswerRaw = q.vocab.german;
                 }
                 
                 const correctAnswer = normalizeAnswer(correctAnswerRaw);
@@ -2358,7 +2474,7 @@
 
                 const itemHtml = `
                     <div class="p-4 rounded-lg shadow-md border-l-4 ${statusClass}">
-                        <p class="text-sm font-medium text-gray-700">Frage ${index + 1}: <span class="text-lg font-bold">${testDirection === 'de->en' ? (dataInverted ? q.vocab.english : q.vocab.german) : (dataInverted ? q.vocab.german : q.vocab.english)}</span></p>
+                        <p class="text-sm font-medium text-gray-700">Frage ${index + 1}: <span class="text-lg font-bold">${testDirection === 'de->en' ? q.vocab.german : q.vocab.english}</span></p>
                         <p class="text-xs text-gray-500 mt-1">Erwartet: <span class="font-bold text-gray-800">${q.correctAnswer}</span></p>
                         <p class="text-xs text-gray-500">Deine Eingabe: <span class="font-bold text-gray-800">${q.userAnswer || '-- Leer --'}</span></p>
                         
@@ -3537,7 +3653,230 @@
         }
 
         // ----------------------------------------------------------------------
-        // 11. Initialisierung
+        // 11. Vokabelverwaltung (Manage View) & Lara's Folder Logic
+        // ----------------------------------------------------------------------
+        
+        let currentManageFolder = 'all';
+        let selectedVocabIds = new Set();
+
+        // **NEU: Lara's Module Data (hardcoded from images)**
+        const LARA_MODULES = {
+            'checkin': {
+                title: 'S.216 Check in',
+                imageSrc: 'S.216_Check-in_LARA.VOK.jpg', // Placeholder filename
+                vocabs: [
+                    { "german": "westlich von", "english": "to the west of" },
+                    { "german": "die Küste", "english": "coastline" },
+                    { "german": "voller", "english": "full of" },
+                    { "german": "pro", "english": "per" },
+                    { "german": "der Nationalpark; der Naturpark", "english": "national park" },
+                    { "german": "das Reiten", "english": "horse riding" },
+                    { "german": "Walisisch; walisisch; aus Wales; der Waliser/die Waliserin", "english": "Welsh" },
+                    { "german": "der Drache", "english": "dragon" },
+                    { "german": "die Flagge; die Fahne", "english": "flag" },
+                    { "german": "das Symbol", "english": "symbol" },
+                    { "german": "als", "english": "as" },
+                    { "german": "past participle von to become (werden)", "english": "become" },
+                    { "german": "der Chor", "english": "choir" },
+                    { "german": "üben; trainieren", "english": "to practise" },
+                    { "german": "die Unterhaltung", "english": "entertainment" },
+                    { "german": "das Kanufahren", "english": "canoeing" },
+                    { "german": "die Seilrutsche", "english": "zip line" },
+                    { "german": "die Legende; die Sage", "english": "legend" }
+                ]
+            },
+            'station1': {
+                title: 'S. 2016-2017 Station 1',
+                imageSrc: 'S.216-217_Station1_LARA.VOK.jpg', // Placeholder filename
+                vocabs: [
+                    { "german": "das Mitglied", "english": "member" },
+                    { "german": "die Behinderung; die Unfähigkeit", "english": "disability" },
+                    { "german": "der Basketball", "english": "basketball" },
+                    { "german": "das Spielfeld", "english": "court" },
+                    { "german": "spaßig; lustig; witzig; fröhlich; amüsant", "english": "fun" },
+                    { "german": "klingen; sich anhören", "english": "to sound" },
+                    { "german": "die Sicherheit", "english": "safety" },
+                    { "german": "Mitglieds-; die Mitgliedschaft", "english": "membership" },
+                    { "german": "der Beitrag; die Gebühr", "english": "fee" },
+                    { "german": "trainieren; ausbilden", "english": "to train" },
+                    { "german": "die Trainingsstunde; die Trainingseinheit", "english": "training session" },
+                    { "german": "der Trainer / die Trainerin", "english": "coach" },
+                    { "german": "leiten; führen; anführen", "english": "to lead, led, led" },
+                    { "german": "das Spiel", "english": "match" },
+                    { "german": "der Zeitplan", "english": "schedule" },
+                    { "german": "pro Jahr", "english": "a year" },
+                    { "german": "das Vereinsheim; das Klubhaus", "english": "clubhouse" },
+                    { "german": "Spenden-; die Geldbeschaffung", "english": "fundraising" },
+                    { "german": "das Treffen; die Besprechung; das Meeting", "english": "meeting" },
+                    { "german": "der Plan", "english": "plan" },
+                    { "german": "zweimal; doppelt", "english": "twice" },
+                    { "german": "ausfüllen", "english": "to fill in" },
+                    { "german": "Anmelde-; die Anmeldung", "english": "registration" },
+                    { "german": "das Formular", "english": "form" },
+                    { "german": "sich kümmern um", "english": "to look after" },
+                    { "german": "hier: der Schriftführer / die Schriftführerin", "english": "secretary" },
+                    { "german": "der Vorsitzende / die Vorsitzende", "english": "chairperson" },
+                    { "german": "der Kassenwart / die Kassenwartin; der Schatzmeister / die Schatzmeisterin", "english": "treasurer" },
+                    { "german": "der Pressesprecher / die Pressesprecherin", "english": "press officer" }
+                ]
+            }
+        };
+
+        // **NEUE FUNKTIONEN FÜR LARA'S ORDNER**
+        
+        window.showModuleList = function(moduleKey) {
+            const module = LARA_MODULES[moduleKey];
+            if (!module) return;
+
+            document.getElementById('module-list-title').textContent = module.title;
+            const tbody = document.getElementById('module-list-body');
+            tbody.innerHTML = module.vocabs.map(v => `
+                <tr>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${v.german}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${v.english}</td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('module-list-modal').classList.remove('hidden');
+        };
+
+        window.closeModuleListModal = function() {
+            document.getElementById('module-list-modal').classList.add('hidden');
+        };
+
+        window.showModuleImage = function(moduleKey) {
+            const module = LARA_MODULES[moduleKey];
+            if (!module) return;
+
+            document.getElementById('module-image-title').textContent = module.title;
+            const img = document.getElementById('module-image-src');
+            img.src = module.imageSrc;
+            img.onerror = function() {
+                this.src = 'https://via.placeholder.com/600x400?text=Bild+nicht+gefunden+(Dateiname+prüfen)';
+            };
+            
+            document.getElementById('module-image-modal').classList.remove('hidden');
+        };
+
+        window.closeModuleImageModal = function() {
+            document.getElementById('module-image-modal').classList.add('hidden');
+        };
+
+        window.addAllModuleVocabs = function(moduleKey) {
+            const module = LARA_MODULES[moduleKey];
+            if (!module) return;
+            
+            if (confirm(`Möchten Sie alle ${module.vocabs.length} Vokabeln aus "${module.title}" zu Ihrer Lernliste hinzufügen?`)) {
+                addNewVocabulary(module.vocabs);
+                alert('✅ Alle Vokabeln wurden erfolgreich hinzugefügt!');
+            }
+        };
+        
+        function loadVocabularFolder(folderName) {
+            if (folderName === 'laras') {
+                showView('lara');
+                return;
+            }
+            
+            currentManageFolder = folderName;
+            // Falls andere Ordner existieren, hier Logik einfügen.
+            // Aktuell fallback auf Manage View
+            if (folderName !== 'all' && folderName !== 'laras') {
+                alert('Dieser Ordner ist noch leer.');
+                return;
+            }
+            renderManageVocabList();
+        }
+        
+        function renderManageVocabList() {
+            const container = document.getElementById('manage-vocab-list');
+            if (!container) return;
+            
+            // Zeige alle Vokabeln - Scrolling wird durch max-height und overflow-y-auto ermöglicht
+            const vocabs = VOCABULARY_BASE;
+            
+            if (vocabs.length === 0) {
+                container.innerHTML = '<p class="text-gray-500 text-center py-8">📭 Keine Vokabeln in dieser Ordner</p>';
+                return;
+            }
+            
+            container.innerHTML = vocabs.map(vocab => `
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100">
+                    <input type="checkbox" class="vocab-checkbox" data-vocab-id="${vocab.id}" 
+                           onchange="updateVocabSelection(this)">
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-800">${vocab.german}</p>
+                        <p class="text-sm text-blue-600">${vocab.english}</p>
+                        ${vocab.example ? `<p class="text-xs text-gray-500 italic">Beispiel: ${vocab.example}</p>` : ''}
+                    </div>
+                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-semibold">Box ${vocab.box}</span>
+                </div>
+            `).join('');
+        }
+        
+        function updateVocabSelection(checkbox) {
+            const vocabId = checkbox.dataset.vocabId;
+            if (checkbox.checked) {
+                selectedVocabIds.add(vocabId);
+            } else {
+                selectedVocabIds.delete(vocabId);
+            }
+            updateSelectAllButtonState();
+        }
+        
+        function toggleSelectAllVocabs() {
+            const checkboxes = document.querySelectorAll('.vocab-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            
+            checkboxes.forEach(cb => {
+                cb.checked = !allChecked;
+                updateVocabSelection(cb);
+            });
+            
+            updateSelectAllButtonState();
+        }
+        
+        function updateSelectAllButtonState() {
+            const checkboxes = document.querySelectorAll('.vocab-checkbox');
+            if (checkboxes.length === 0) return;
+            
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const selectAllBtn = document.querySelector('[onclick="toggleSelectAllVocabs()"]');
+            if (selectAllBtn) {
+                selectAllBtn.textContent = allChecked ? '☐ Alle abwählen' : '☑️ Alle auswählen';
+            }
+        }
+        
+        function deleteSelectedVocabs() {
+            if (selectedVocabIds.size === 0) {
+                alert('Bitte wählen Sie mindestens eine Vokabel zum Löschen aus.');
+                return;
+            }
+            
+            const deleteCount = selectedVocabIds.size;
+            
+            if (!confirm(`Möchten Sie ${deleteCount} Vokabel(n) wirklich löschen? Dies kann nicht rückgängig gemacht werden.`)) {
+                return;
+            }
+            
+            // Entferne die ausgewählten Vokabeln aus VOCABULARY_BASE
+            VOCABULARY_BASE = VOCABULARY_BASE.filter(vocab => !selectedVocabIds.has(vocab.id));
+            
+            // Speichere die aktualisierten Vokabeln
+            saveVocabulary();
+            
+            // Leere die Auswahl
+            selectedVocabIds.clear();
+            
+            // Aktualisiere die Anzeige
+            renderManageVocabList();
+            updateSelectAllButtonState();
+            
+            alert(`${deleteCount} Vokabel(n) gelöscht.`);
+        }
+
+        // ----------------------------------------------------------------------
+        // 12. Initialisierung
         // ----------------------------------------------------------------------
 
         window.onload = function() {
@@ -3552,5 +3891,6 @@
         }
     </script>
 
+<script type="module" src="/index.tsx"></script>
 </body>
 </html>
