@@ -228,6 +228,15 @@
         }
     </style>
 <link rel="stylesheet" href="/index.css">
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
+  }
+}
+</script>
 </head>
 <body class="p-4 md:p-8">
 
@@ -479,8 +488,6 @@
                     <p id="result-grade" class="text-6xl font-black text-red-900 text-center mt-1">-</p>
                 </div>
                 
-                <!-- Entfernt: Button redundant, da Ergebnisse nach Korrektur automatisch neu berechnet werden -->
-
                 <h4 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Detaillierte Korrektur (Manuell anpassbar)</h4>
                 <div id="test-correction" class="space-y-4">
                     </div>
@@ -600,7 +607,7 @@
             </button>
         </div>
         
-        <!-- NEU: Lara's View -->
+        <!-- Lara's View -->
         <div id="lara-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📁 Lara's Englisch Vokabeln</h2>
             
@@ -641,6 +648,17 @@
             </button>
         </div>
 
+        <!-- NEW: Living and Working Abroad View -->
+        <div id="livingandworking-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📁 Englisch Living and working abroad</h2>
+            <div id="living-modules-container">
+                <!-- Dynamically populated via JS to avoid huge HTML redundancy, but logic matches requirements exactly -->
+            </div>
+            <button class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl" onclick="showView('manage')">
+                ← Zurück zur Verwaltung
+            </button>
+        </div>
+
         <div id="edit-vocab-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4">
                 <h2 class="text-2xl font-bold text-gray-800 mb-4 border-b pb-3">✏️ Vokabel bearbeiten</h2>
@@ -665,7 +683,7 @@
             </div>
         </div>
         
-        <!-- Modals for Lara's Modules -->
+        <!-- Modals for Modules -->
         <div id="module-list-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b pb-3">
@@ -700,7 +718,7 @@
                 <div class="flex-1 overflow-auto bg-gray-100 rounded-lg flex items-center justify-center p-2 relative">
                     <img id="module-image-src" src="" alt="Vokabelseite" class="max-w-full h-auto shadow-md">
                     <p class="absolute bottom-4 left-0 right-0 text-center text-xs text-gray-500 bg-white bg-opacity-70 p-1">
-                        Hinweis: Stellen Sie sicher, dass das Bild im gleichen Ordner liegt (z.B. "checkin.jpg").
+                        Hinweis: Stellen Sie sicher, dass das Bild im gleichen Ordner liegt (z.B. "Living_Page1.jpg").
                     </p>
                 </div>
                 <button class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl" onclick="closeModuleImageModal()">
@@ -909,7 +927,6 @@
         const NUM_BOXES = 5; 
         
         // Basis-Vokabeln, die nur beim ERSTEN Start verwendet werden, falls kein Local Storage vorhanden ist.
-        // **REPARIERT: Deutsch und Englisch wurden korrigiert und stehen jetzt in den richtigen Feldern**
         const DEFAULT_VOCABULARY = [
             { german: "einstellen, anpassen (an)", english: "to adjust (to)", example: "It is still hard for me to adjust to living on the countryside.", box: 1 },
             { german: "Antwort, Reaktion", english: "response", example: "His sharp response confused me.", box: 1 },
@@ -1010,8 +1027,6 @@
         // **NEU: Speichert geplante Tests im Kalender**
         const SCHEDULED_TESTS_KEY = 'vokabeltrainer_v19_scheduled_tests';
         
-        // **ENTFERNT: BOX_TRAIN_DATE_KEY - DIESE KONSTANTE WIRD NICHT MEHR BENÖTIGT.**
-
         function loadVocabulary() {
             try {
                 const storedVocab = localStorage.getItem(STORAGE_KEY);
@@ -1042,16 +1057,12 @@
                     selectedTrainingBoxes = JSON.parse(storedBoxes);
                 }
                 
-                // **ENTFERNT: Automatische Inversions-Erkennung entfernt, da Daten jetzt sauber sind.**
-                
             } catch (e) {
                 console.error("Fehler beim Laden der Vokabeln aus Local Storage:", e);
                 // Fallback zu Standard-Vokabeln
                 VOCABULARY_BASE = DEFAULT_VOCABULARY;
             }
         }
-
-        // **ENTFERNT: detectDataInversion() wurde gelöscht, um Konflikte zwischen alten und neuen Daten zu vermeiden.**
 
         function saveVocabulary() {
             try {
@@ -1099,10 +1110,6 @@
                 }
             }
         }
-
-        // **ENTFERNT: setBoxTrainedDate() - DIESE FUNKTION WIRD NICHT MEHR BENÖTIGT.**
-        // **ENTFERNT: hasBoxBeenTrainedToday() - DIESE FUNKTION WIRD NICHT MEHR BENÖTIGT.**
-
 
         // ----------------------------------------------------------------------
         // 2. DOM Elements
@@ -1320,8 +1327,9 @@
                  fillInBlankContainer.classList.add('hidden'); 
                  
                  document.querySelectorAll('#games-view button[id^="start-"]').forEach(btn => btn.disabled = false);
-            } else if (viewId === 'lara') {
-                // Initialisierung für Lara View falls nötig
+            } else if (viewId === 'livingandworking') {
+                // Populate the dynamic container for Living and Working modules
+                renderLivingModules();
             }
 
              // Hervorheben des aktiven Navigations-Buttons
@@ -1409,24 +1417,6 @@
         // ----------------------------------------------------------------------
         // 6. KI-Logik (Manage View) - Unverändert
         // ----------------------------------------------------------------------
-        const VOCABULARY_SCHEMA = {
-            type: "ARRAY",
-            description: "Eine Liste von Vokabelpaaren, extrahiert aus dem Bild. Jedes Element sollte die deutsche Vokabel und deren englische Übersetzung enthalten.",
-            items: {
-                type: "OBJECT",
-                properties: {
-                    "german": {
-                        "type": "STRING",
-                        "description": "Die Vokabel in deutscher Sprache."
-                    },
-                    "english": {
-                        "type": "STRING",
-                        "description": "Die Vokabel in englischer Sprache."
-                    }
-                },
-                required: ["german", "english"]
-            }
-        };
         
         window.extractVocabularyFromImage = async function() {
             const file = imageUpload.files[0];
@@ -1979,11 +1969,6 @@
             correctAnswersCount = 0;
             initialDeckSize = cards.length;
             trainingSessionDetails = []; // **NEU: Reset für neues Training**
-            
-            // **REPARATUR: Entfernung der Logik zur Markierung von Box 1 als trainiert.**
-            // if (cards.some(v => v.box === 1)) {
-            //     setBoxTrainedDate();
-            // }
 
             startButton.classList.add('hidden');
             checkButton.classList.remove('hidden');
@@ -3659,11 +3644,11 @@
         let currentManageFolder = 'all';
         let selectedVocabIds = new Set();
 
-        // **NEU: Lara's Module Data (hardcoded from images)**
+        // **NEU: Lara's Module Data**
         const LARA_MODULES = {
             'checkin': {
                 title: 'S.216 Check in',
-                imageSrc: 'S.216_Check-in_LARA.VOK.jpg', // Placeholder filename
+                imageSrc: 'S.216_Check-in_LARA.VOK.jpg', 
                 vocabs: [
                     { "german": "westlich von", "english": "to the west of" },
                     { "german": "die Küste", "english": "coastline" },
@@ -3687,7 +3672,7 @@
             },
             'station1': {
                 title: 'S. 2016-2017 Station 1',
-                imageSrc: 'S.216-217_Station1_LARA.VOK.jpg', // Placeholder filename
+                imageSrc: 'S.216-217_Station1_LARA.VOK.jpg', 
                 vocabs: [
                     { "german": "das Mitglied", "english": "member" },
                     { "german": "die Behinderung; die Unfähigkeit", "english": "disability" },
@@ -3722,10 +3707,310 @@
             }
         };
 
-        // **NEUE FUNKTIONEN FÜR LARA'S ORDNER**
+        // **NEU: Living and working abroad Data (16 pages)**
+        const LIVING_MODULES = {
+            'living_p1': {
+                title: 'Living and working - Page 1 (Intro)',
+                imageSrc: 'Living_Page1.jpg',
+                vocabs: [
+                    { "german": "seinen Horizont erweitern", "english": "to broaden/expand one's horizons" },
+                    { "german": "(Kranken)pflege(-)", "english": "nursing (no pl)" },
+                    { "german": "(sich) einschreiben, sich (an)melden", "english": "to enrol(l)" },
+                    { "german": "Ausbildung, Lehre", "english": "apprenticeship" },
+                    { "german": "dadurch", "english": "thereby" },
+                    { "german": "Gap-Year, Lückenjahr", "english": "gap year" },
+                    { "german": "Belegschaft, Arbeiterschaft, hier: berufstätige Bevölkerung", "english": "workforce (no pl)" },
+                    { "german": "Erforschung", "english": "exploration" },
+                    { "german": "klarstellen, näher erläutern, hier: sich im Klaren werden (über)", "english": "to clarify" },
+                    { "german": "Bestreben, Ziel", "english": "aspiration" }
+                ]
+            },
+            'living_p2': {
+                title: 'Living and working - Page 2',
+                imageSrc: 'Living_Page2.jpg',
+                vocabs: [
+                    { "german": "umformend, umgestaltend", "english": "transformative" },
+                    { "german": "Reife", "english": "maturity (no pl)" },
+                    { "german": "Eintauchen", "english": "immersion (no pl)" },
+                    { "german": "juristische Person, Einheit, hier: Unternehmen", "english": "entity" },
+                    { "german": "Anpassungsfähigkeit", "english": "adaptability (no pl)" },
+                    { "german": "günstig, vorteilhaft, von Vorteil", "english": "advantageous" },
+                    { "german": "Unternehmung, Übernahme (einer Aufgabe), Verpflichtung", "english": "undertaking" },
+                    { "german": "Praktikant/in", "english": "intern" },
+                    { "german": "in Angriff nehmen, beginnen", "english": "to embark on" },
+                    { "german": "(sich) widmen", "english": "to dedicate" },
+                    { "german": "eintauchen, untertauchen", "english": "to immerse" },
+                    { "german": "Beschäftigung, Anstellung, Tätigkeit", "english": "employment (no pl)" }
+                ]
+            },
+            'living_p3': {
+                title: 'Living and working - Page 3',
+                imageSrc: 'Living_Page3.jpg',
+                vocabs: [
+                    { "german": "Denkart, Mentalität", "english": "mindset" },
+                    { "german": "Problemlöse(n)", "english": "problem-solving (no pl)" },
+                    { "german": "außerdem, zusätzlich", "english": "additionally" },
+                    { "german": "Selbstvertrauen", "english": "self-confidence (no pl)" },
+                    { "german": "Fundament, Grundlage, Stiftung", "english": "foundation" },
+                    { "german": "unverwechselbar, charakteristisch", "english": "distinctive" },
+                    { "german": "Entschädigung(sleistung), Schadenersatz", "english": "compensation" },
+                    { "german": "Entschlossenheit, Feststellung, Bestimmung", "english": "determination" },
+                    { "german": "günstig, positiv, zustimmend", "english": "favourable" },
+                    { "german": "umfassen, beinhalten", "english": "to encompass" },
+                    { "german": "Anerkennung, Verständnis, Sinn", "english": "appreciation" },
+                    { "german": "Reihenfolge, Reihe, Ablauf", "english": "sequence" }
+                ]
+            },
+            'living_p4': {
+                title: 'Living and working - Page 4',
+                imageSrc: 'Living_Page4.jpg',
+                vocabs: [
+                    { "german": "einstellen, anpassen (an)", "english": "to adjust (to)" },
+                    { "german": "Antwort, Reaktion", "english": "response" },
+                    { "german": "Gegenmittel, Gegengift", "english": "antidote" },
+                    { "german": "Lagerkoller, Gefühl der Beengtheit", "english": "cabin fever" },
+                    { "german": "(ver)spotten, (ver)höhnen", "english": "to mock" },
+                    { "german": "Weisheit, Klugheit", "english": "wisdom (no pl)" },
+                    { "german": "Reiseroute, Reiseplan", "english": "itinerary" },
+                    { "german": "ein Körnchen Wahrheit", "english": "a kernel of truth" },
+                    { "german": "Zeitraum, (Strecken)abschnitt, Stück", "english": "stretch" },
+                    { "german": "vollgestopft", "english": "crammed" },
+                    { "german": "jdn in Versuchung führen", "english": "to tempt sb" }
+                ]
+            },
+            'living_p5': {
+                title: 'Living and working - Page 5',
+                imageSrc: 'Living_Page5.jpg',
+                vocabs: [
+                    { "german": "sich nach etw sehnen", "english": "to long for sth" },
+                    { "german": "praktisch, nützlich, griffbereit", "english": "handy" },
+                    { "german": "vorspulen", "english": "to fast forward (no pl)" },
+                    { "german": "fest, eng, hier: knapp", "english": "tight" },
+                    { "german": "Mindestlohn", "english": "minimum wage (no pl)" },
+                    { "german": "Aufseher/in, Wärter/in, hier: Bademeister/in", "english": "attendant" },
+                    { "german": "abgesehen von", "english": "aside from" },
+                    { "german": "Vororte, Randbezirke", "english": "suburbia (no pl)" },
+                    { "german": "Anlage, Einrichtung", "english": "facility" },
+                    { "german": "(be)enden, aufhören", "english": "to cease" },
+                    { "german": "folgerichtig, wichtig", "english": "consequential" },
+                    { "german": "belastend, mühsam, lästig", "english": "burdensome" }
+                ]
+            },
+            'living_p6': {
+                title: 'Living and working - Page 6',
+                imageSrc: 'Living_Page6.jpg',
+                vocabs: [
+                    { "german": "nach beendetem Studium", "english": "post-graduate" },
+                    { "german": "(drohend) auftauchen", "english": "to loom" },
+                    { "german": "Aufschluss über etw geben", "english": "to shed/throw light on sth" },
+                    { "german": "untersuchen, nachgehen", "english": "to investigate" },
+                    { "german": "nützlich, vorteilhaft", "english": "beneficial" },
+                    { "german": "gefragt sein", "english": "to be in demand" },
+                    { "german": "außer Acht lassen, auslassen, unterlassen", "english": "to omit" },
+                    { "german": "(kleine) Broschüre, Faltblatt, Pamphlet", "english": "pamphlet" },
+                    { "german": "darüber hinaus, zusätzlich, außerdem", "english": "plus" },
+                    { "german": "Mit..., ...genosse/genossin, Kollege/Kollegin", "english": "fellow" },
+                    { "german": "fruchtbar, ertragreich, hier: lohnend", "english": "fruitful" },
+                    { "german": "stolpern, strampeln, sich abmühen", "english": "to flounder" },
+                    { "german": "einen (Universitäts)abschluss erwerben", "english": "to graduate" }
+                ]
+            },
+            'living_p7': {
+                title: 'Living and working - Page 7',
+                imageSrc: 'Living_Page7.jpg',
+                vocabs: [
+                    { "german": "Schüler/in einer Highschool im ersten Jahr", "english": "freshman (pl freshmen, AE)" },
+                    { "german": "unberücksichtigt lassen", "english": "to discount" },
+                    { "german": "nützen, profitieren, Nutzen ziehen", "english": "to benefit" },
+                    { "german": "unersetzbar, unersetzlich", "english": "irreplaceable" },
+                    { "german": "aufnehmen, eingliedern, enthalten", "english": "to incorporate" },
+                    { "german": "aktiv (eingreifend), praktisch", "english": "hands-on" },
+                    { "german": "sachkundig, kenntnisreich, bewandert", "english": "knowledgeable" },
+                    { "german": "wuchernd, eindringend, invasiv-", "english": "invasive" },
+                    { "german": "befallen, heimsuchen", "english": "to infest" },
+                    { "german": "beispiellos, einmalig", "english": "unparalleled" },
+                    { "german": "aufgeschlossen, unvoreingenommen", "english": "open-minded" },
+                    { "german": "Ortsansässige/r, Einheimische/r", "english": "local" }
+                ]
+            },
+            'living_p8': {
+                title: 'Living and working - Page 8',
+                imageSrc: 'Living_Page8.jpg',
+                vocabs: [
+                    { "german": "dankbar", "english": "grateful" },
+                    { "german": "sich eingewöhnen", "english": "to settle in" },
+                    { "german": "Pharma-, pharmazeutisch", "english": "pharmaceutical" },
+                    { "german": "bereichern, anreichern", "english": "to enrich" },
+                    { "german": "Vertrag, Auftrag", "english": "contract" },
+                    { "german": "bearbeiten, verarbeiten", "english": "to process" },
+                    { "german": "abhängig, hier: wichtig", "english": "reliant" },
+                    { "german": "Hindernis", "english": "obstacle" },
+                    { "german": "(Staats)bürger/in", "english": "citizen" },
+                    { "german": "zusammenfallen, zusammentreffen", "english": "to coincide" },
+                    { "german": "Rückblick", "english": "retrospection (no pl)" },
+                    { "german": "fortschreiten, fortfahren", "english": "to proceed" },
+                    { "german": "Aufsicht, Betreuer/in", "english": "supervisor" },
+                    { "german": "Zimmermann/Zimmererin, Schreiner/in", "english": "carpenter" }
+                ]
+            },
+            'living_p9': {
+                title: 'Living and working - Page 9',
+                imageSrc: 'Living_Page9.jpg',
+                vocabs: [
+                    { "german": "gelernter Handwerker", "english": "craftsman" },
+                    { "german": "Genehmigung, Erlaubnis", "english": "permit" },
+                    { "german": "Berufs-, beruflich", "english": "vocational" },
+                    { "german": "Kassierer/in", "english": "cashier" },
+                    { "german": "Erste Hilfe", "english": "first aid (no pl)" },
+                    { "german": "Rabatt, Preisnachlass, Abschlag", "english": "discount" },
+                    { "german": "Dolmetscher/in", "english": "interpreter" },
+                    { "german": "Erbe, Herkunft", "english": "heritage" },
+                    { "german": "Geschichtenerzählen", "english": "storytelling (no pl)" },
+                    { "german": "unterschiedlich, vielfältig, bewegt", "english": "varied" },
+                    { "german": "Plan, Projekt, Schema", "english": "scheme" },
+                    { "german": "pleite, abgebrannt, blank", "english": "broke (informal)" },
+                    { "german": "Auszubildende/r, Lehrling", "english": "apprentice" },
+                    { "german": "wertvoll, kostbar", "english": "valuable" }
+                ]
+            },
+            'living_p10': {
+                title: 'Living and working - Page 10',
+                imageSrc: 'Living_Page10.jpg',
+                vocabs: [
+                    { "german": "karg, schlicht, krass", "english": "stark" },
+                    { "german": "schwach, leise", "english": "faint" },
+                    { "german": "zuweisen, zuteilen, bereitstellen", "english": "to allocate" },
+                    { "german": "Toilette", "english": "bathroom (AE)" },
+                    { "german": "Abklatschen", "english": "high five" },
+                    { "german": "Bluterguss", "english": "bruising (no pl)" },
+                    { "german": "angenehm, schön, freundlich", "english": "pleasant" },
+                    { "german": "muffig, abgestanden, schal", "english": "stale" },
+                    { "german": "konserviert, eingedost", "english": "tinned" },
+                    { "german": "Schweiß", "english": "sweat (no pl)" },
+                    { "german": "Vergnügen, Genuss, Lust", "english": "pleasure" },
+                    { "german": "Kreuzfahrt", "english": "cruise" },
+                    { "german": "sich einschreiben, sich anmelden", "english": "to sign up" }
+                ]
+            },
+            'living_p11': {
+                title: 'Living and working - Page 11',
+                imageSrc: 'Living_Page11.jpg',
+                vocabs: [
+                    { "german": "Technik, Ingenieurwissenschaft, Maschinenbau", "english": "engineering (no pl)" },
+                    { "german": "Vorzug, Gewinn, hier: Bereicherung", "english": "asset" },
+                    { "german": "Rettungsboot", "english": "lifeboat" },
+                    { "german": "Rost(-)", "english": "rust (no pl)" },
+                    { "german": "aufkommen, sich ergeben", "english": "to arise | arose | arisen (irr)" },
+                    { "german": "feindselig", "english": "hostile" },
+                    { "german": "gelassen, locker, unkompliziert", "english": "easy-going" },
+                    { "german": "Tempo, Schritt", "english": "pace" },
+                    { "german": "unbedeutend, klein, hier: Neben-", "english": "minor" },
+                    { "german": "Ergebnis, Punktezahl, Spielstand", "english": "score" },
+                    { "german": "(auf)geladen, erregt", "english": "charged" },
+                    { "german": "heiter, fröhlich, gesellig", "english": "convivial" },
+                    { "german": "berauschend, aufregend", "english": "heady" }
+                ]
+            },
+            'living_p12': {
+                title: 'Living and working - Page 12',
+                imageSrc: 'Living_Page12.jpg',
+                vocabs: [
+                    { "german": "(er)stickend, (er)drückend", "english": "stifling" },
+                    { "german": "jdn im Stich lassen", "english": "to fail sb" },
+                    { "german": "Unruhestifter/in", "english": "troublemaker" },
+                    { "german": "sich schnell (und ruckartig) bewegen, durchblättern", "english": "to flick" },
+                    { "german": "gedämpft, leise", "english": "muffled" },
+                    { "german": "(gellend) schreien", "english": "to yell" },
+                    { "german": "Taschenlampe, Fackel, Feuer", "english": "torch" },
+                    { "german": "(Kopf)kissenbezug", "english": "pillowcase" },
+                    { "german": "(hoch)heben, aufheben", "english": "to lift" },
+                    { "german": "Kursivschrift/-druck", "english": "italics (pl)" },
+                    { "german": "Dramatiker/in", "english": "playwright" },
+                    { "german": "Ironie", "english": "irony" },
+                    { "german": "sich um etw drehen", "english": "to center on/(a)round sth" },
+                    { "german": "Kürze, Prägnanz", "english": "brevity (no pl)" },
+                    { "german": "äußern, bemerken, eine Bemerkung machen", "english": "to remark" }
+                ]
+            },
+            'living_p13': {
+                title: 'Living and working - Page 13',
+                imageSrc: 'Living_Page13.jpg',
+                vocabs: [
+                    { "german": "bewegt, beunruhigt, gestört", "english": "troubled" },
+                    { "german": "fliehen, flüchten", "english": "to flee | fled | fled (irr)" },
+                    { "german": "Hafen", "english": "port" },
+                    { "german": "Hauptsitz, Zentrale", "english": "headquarters (pl)" },
+                    { "german": "zusammenbauen, montieren, sich versammeln", "english": "to assemble" },
+                    { "german": "verschlingen", "english": "to devour" },
+                    { "german": "unbezahlbar", "english": "invaluable" },
+                    { "german": "stöhnen, klagen", "english": "to moan" },
+                    { "german": "erbärmlich, Mitleid erregend", "english": "pathetic" },
+                    { "german": "ein Haufen (...)", "english": "a bunch (of ...) (informal, AE)" },
+                    { "german": "Verwaltung, Regierung", "english": "administration" },
+                    { "german": "berechtigt, rechtmäßig, legitim", "english": "legitimate" },
+                    { "german": "gewalttätig werden, sich anfassen", "english": "to get physical" },
+                    { "german": "angesehen, renommiert", "english": "prestigious" }
+                ]
+            },
+            'living_p14': {
+                title: 'Living and working - Page 14',
+                imageSrc: 'Living_Page14.jpg',
+                vocabs: [
+                    { "german": "strikt, streng, genau, präzise", "english": "rigorous" },
+                    { "german": "Zulassung(s-), Eintritt, Zutritt", "english": "admission" },
+                    { "german": "Termin, Verabredung, Ernennung", "english": "appointment" },
+                    { "german": "Kunde/Kundin, Klient/in, Auftraggeber/in", "english": "client" },
+                    { "german": "Schätzung, Beurteilung", "english": "assessment" },
+                    { "german": "einwerfen, dazwischenreden, unterbrechen", "english": "to interject" },
+                    { "german": "buchstäblich, (wort)wörtlich", "english": "literally" },
+                    { "german": "aufschreien, ausrufen", "english": "to exclaim" },
+                    { "german": "selbstbeherrscht", "english": "self-possessed" },
+                    { "german": "(Flug)bahn, Kurve", "english": "trajectory" },
+                    { "german": "erwachsen, reif", "english": "mature" },
+                    { "german": "Papierkram, Büroarbeit, Schreibarbeit", "english": "paperwork (no pl)" },
+                    { "german": "Mappe, Schnellhefter, Ordner", "english": "folder" }
+                ]
+            },
+            'living_p15': {
+                title: 'Living and working - Page 15',
+                imageSrc: 'Living_Page15.jpg',
+                vocabs: [
+                    { "german": "Unterschrift", "english": "signature" },
+                    { "german": "Studiengebühr, Schulgeld, Unterricht", "english": "tuition" },
+                    { "german": "jdm zur Verfügung stehen", "english": "to be at sb's disposal" },
+                    { "german": "(geistes)abwesend", "english": "absently" },
+                    { "german": "kontern, dagegenhalten", "english": "to counter" },
+                    { "german": "entführen", "english": "to kidnap" },
+                    { "german": "Hütte", "english": "hut" },
+                    { "german": "offensichtlich, anscheinend", "english": "apparently" },
+                    { "german": "Rollstuhl", "english": "wheelchair" },
+                    { "german": "(kurz) gucken", "english": "to peek" },
+                    { "german": "gut aussehend", "english": "handsome" },
+                    { "german": "Weg, Pfad, Spur", "english": "trail" },
+                    { "german": "Karibik, karibisch", "english": "Caribbean" },
+                    { "german": "klumpig, (grob)körnig", "english": "grainy" },
+                    { "german": "verschwommen, undeutlich, nicht klar, voneinander getrennt", "english": "blurry/blurred" }
+                ]
+            },
+            'living_p16': {
+                title: 'Living and working - Page 16',
+                imageSrc: 'Living_Page16.jpg',
+                vocabs: [
+                    { "german": "verschwommen, unscharf, flaumig", "english": "fuzzy" },
+                    { "german": "Salztonebene, Salzwüste", "english": "salt flats (pl)" },
+                    { "german": "(Fälligkeits)termin, Fälligkeitstag", "english": "due date" },
+                    { "german": "aufsteigen, hier: höherschlagen", "english": "to soar" }
+                ]
+            }
+        };
+        
+        // Helper to access all modules
+        const ALL_MODULES = Object.assign({}, LARA_MODULES, LIVING_MODULES);
+
+        // **NEUE FUNKTIONEN FÜR LARA'S & LIVING ORDNER**
         
         window.showModuleList = function(moduleKey) {
-            const module = LARA_MODULES[moduleKey];
+            const module = ALL_MODULES[moduleKey];
             if (!module) return;
 
             document.getElementById('module-list-title').textContent = module.title;
@@ -3745,7 +4030,7 @@
         };
 
         window.showModuleImage = function(moduleKey) {
-            const module = LARA_MODULES[moduleKey];
+            const module = ALL_MODULES[moduleKey];
             if (!module) return;
 
             document.getElementById('module-image-title').textContent = module.title;
@@ -3763,7 +4048,7 @@
         };
 
         window.addAllModuleVocabs = function(moduleKey) {
-            const module = LARA_MODULES[moduleKey];
+            const module = ALL_MODULES[moduleKey];
             if (!module) return;
             
             if (confirm(`Möchten Sie alle ${module.vocabs.length} Vokabeln aus "${module.title}" zu Ihrer Lernliste hinzufügen?`)) {
@@ -3772,16 +4057,55 @@
             }
         };
         
+        // **FUNCTION TO RENDER LIVING MODULES**
+        function renderLivingModules() {
+             const container = document.getElementById('living-modules-container');
+             if (!container) return;
+             
+             container.innerHTML = ''; // Clear previous content
+             
+             // Loop through keys living_p1 to living_p16 in order
+             for (let i = 1; i <= 16; i++) {
+                 const key = `living_p${i}`;
+                 const module = LIVING_MODULES[key];
+                 
+                 if (module) {
+                     // Define colors cycling for variety (optional, sticking to requested structure)
+                     // Using a consistent style similar to Lara's view
+                     const html = `
+                        <div class="mb-8 p-6 bg-white rounded-xl border-4 border-purple-300 shadow-lg">
+                            <h3 class="text-xl font-bold text-purple-800 mb-4">${module.title}</h3>
+                            <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                                <button class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded-lg" onclick="showModuleList('${key}')">
+                                    📋 Vokabelliste anzeigen
+                                </button>
+                                <button class="flex-1 bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 rounded-lg" onclick="showModuleImage('${key}')">
+                                    🖼️ Vokabelseite anzeigen
+                                </button>
+                            </div>
+                            <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-transform active:scale-95" onclick="addAllModuleVocabs('${key}')">
+                                ➕ Alle Vokabeln hinzufügen
+                            </button>
+                        </div>
+                     `;
+                     container.innerHTML += html;
+                 }
+             }
+        }
+        
         function loadVocabularFolder(folderName) {
             if (folderName === 'laras') {
                 showView('lara');
+                return;
+            } else if (folderName === 'livingandworking') {
+                showView('livingandworking');
                 return;
             }
             
             currentManageFolder = folderName;
             // Falls andere Ordner existieren, hier Logik einfügen.
             // Aktuell fallback auf Manage View
-            if (folderName !== 'all' && folderName !== 'laras') {
+            if (folderName !== 'all' && folderName !== 'laras' && folderName !== 'livingandworking') {
                 alert('Dieser Ordner ist noch leer.');
                 return;
             }
