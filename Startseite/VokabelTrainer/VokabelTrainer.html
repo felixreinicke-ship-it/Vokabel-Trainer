@@ -611,36 +611,8 @@
         <div id="lara-view" class="view hidden p-4 bg-white rounded-xl shadow-2xl">
             <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center border-b pb-4">📁 Lara's Englisch Vokabeln</h2>
             
-            <!-- Module 1 -->
-            <div class="mb-8 p-6 bg-indigo-50 rounded-xl border-4 border-indigo-300 shadow-lg">
-                <h3 class="text-xl font-bold text-indigo-800 mb-4">S.216 Check in</h3>
-                <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                    <button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-lg" onclick="showModuleList('checkin')">
-                        📋 Vokabelliste anzeigen
-                    </button>
-                    <button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-lg" onclick="showModuleImage('checkin')">
-                        🖼️ Vokabelseite anzeigen
-                    </button>
-                </div>
-                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-transform active:scale-95" onclick="addAllModuleVocabs('checkin')">
-                    ➕ Alle Vokabeln hinzufügen
-                </button>
-            </div>
-
-            <!-- Module 2 -->
-            <div class="mb-8 p-6 bg-pink-50 rounded-xl border-4 border-pink-300 shadow-lg">
-                <h3 class="text-xl font-bold text-pink-800 mb-4">S. 2016-2017 Station 1</h3>
-                <div class="flex flex-col sm:flex-row gap-3 mb-4">
-                    <button class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded-lg" onclick="showModuleList('station1')">
-                        📋 Vokabelliste anzeigen
-                    </button>
-                    <button class="flex-1 bg-pink-500 hover:bg-pink-600 text-white font-bold py-2 rounded-lg" onclick="showModuleImage('station1')">
-                        🖼️ Vokabelseite anzeigen
-                    </button>
-                </div>
-                <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-transform active:scale-95" onclick="addAllModuleVocabs('station1')">
-                    ➕ Alle Vokabeln hinzufügen
-                </button>
+            <div id="lara-modules-container">
+                <!-- Lara's modules will be rendered here dynamically -->
             </div>
 
             <button class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 rounded-xl" onclick="showView('manage')">
@@ -1330,6 +1302,9 @@
             } else if (viewId === 'livingandworking') {
                 // Populate the dynamic container for Living and Working modules
                 renderLivingModules();
+            } else if (viewId === 'lara') {
+                // Populate Lara's modules dynamically when opening Lara view
+                if (typeof renderLaraModules === 'function') renderLaraModules();
             }
 
              // Hervorheben des aktiven Navigations-Buttons
@@ -3705,6 +3680,70 @@
                     { "german": "der Pressesprecher / die Pressesprecherin", "english": "press officer" }
                 ]
             }
+            ,
+            's217': {
+                title: 'S.217 Unit 3',
+                imageSrc: 'S.217_Unit3_LARA.VOK.jpeg',
+                vocabs: [
+                    { "german": "dessen; deren; wessen", "english": "whose" },
+                    { "german": "der Rekord", "english": "record" },
+                    { "german": "der Fußballtrick (bei dem der Ball mit den Knien aufgefangen und eingeklemmt wird)", "english": "knee catch" },
+                    { "german": "Menschen-; menschlich", "english": "human" },
+                    { "german": "der Torbogen; der Bogengang", "english": "archway" },
+                    { "german": "der Staffellauf; die Staffel", "english": "relay" },
+                    { "german": "ausmachen; löschen", "english": "to extinguish" },
+                    { "german": "die Kerze", "english": "candle" },
+                    { "german": "der Holzschuh; der Clog", "english": "clog" },
+                    { "german": "die Algenpaste", "english": "laverbread" },
+                    { "german": "das Gramm", "english": "gram" },
+                    { "german": "die Sekunde", "english": "second" }
+                ]
+            },
+            's218': {
+                title: 'S.218 Unit 3',
+                imageSrc: 'S.218_Unit3_LARA.VOK.jpeg',
+                vocabs: [
+                    { "german": "der Vermittlung; der Telefonist/die Telefonistin", "english": "operator" },
+                    { "german": "der Krankenwagen; der Rettungswagen", "english": "ambulance" },
+                    { "german": "verbinden; durchstellen", "english": "to put through" },
+                    { "german": "herunterfallen; fallen", "english": "to fall off" },
+                    { "german": "Schmerzen haben", "english": "to be in pain" },
+                    { "german": "genau", "english": "exactly" },
+                    { "german": "der Patient/die Patientin", "english": "patient" },
+                    { "german": "bei Bewusstsein; wach", "english": "awake" },
+                    { "german": "stoßen; schlagen; treffen", "english": "to hit" },
+                    { "german": "abwerfen", "english": "to throw off" },
+                    { "german": "brechen; zerbrechen", "english": "break, broke, broken" },
+                    { "german": "past participle von 'to speak' (sprechen)", "english": "spoken" },
+                    { "german": "zittern; frösteln", "english": "to shiver" },
+                    { "german": "schwitzen", "english": "to sweat" },
+                    { "german": "auflegen; aufhängen", "english": "to hang up" },
+                    { "german": "der Finger", "english": "finger" },
+                    { "german": "verdrehen; verzerren", "english": "to twist" },
+                    { "german": "zerren; belasten; anstrengen", "english": "to strain" },
+                    { "german": "der Muskel", "english": "muscle" },
+                    { "german": "brennen; verbrennen", "english": "to burn" },
+                    { "german": "stechen", "english": "to sting" },
+                    { "german": "der Eisbeutel; der Kühlakku", "english": "ice pack" }
+                ]
+            },
+            's219': {
+                title: 'S.219 Unit 3',
+                imageSrc: 'S.219_Unit3_LARA.VOK.jpeg',
+                vocabs: [
+                    { "german": "auftragen", "english": "to apply" },
+                    { "german": "die Medizin; die Medikamente", "english": "medicine" },
+                    { "german": "das Pflaster", "english": "plaster" },
+                    { "german": "das Krankenhaus; das Hospital", "english": "hospital" },
+                    { "german": "die Pinzette", "english": "tweezers" },
+                    { "german": "die Zeckenkarte", "english": "tick card" },
+                    { "german": "die Sicherheitsnadel", "english": "safety pin" },
+                    { "german": "das Klebeband", "english": "sticky tape" },
+                    { "german": "der Verband", "english": "bandage" },
+                    { "german": "der Notruf", "english": "emergency call" },
+                    { "german": "das Alter", "english": "age" }
+                ]
+            }
         };
 
         // **NEU: Living and working abroad Data (16 pages)**
@@ -4090,6 +4129,39 @@
                      `;
                      container.innerHTML += html;
                  }
+             }
+        }
+
+        // FUNCTION TO RENDER LARA MODULES (similar to renderLivingModules)
+        function renderLaraModules() {
+             const container = document.getElementById('lara-modules-container');
+             if (!container) return;
+             container.innerHTML = '';
+
+             // Loop through keys in LARA_MODULES in insertion order
+             for (const key in LARA_MODULES) {
+                 if (!Object.prototype.hasOwnProperty.call(LARA_MODULES, key)) continue;
+                 const module = LARA_MODULES[key];
+                 if (!module) continue;
+
+                 const html = `
+                    <div class="mb-8 p-6 bg-white rounded-xl border-4 border-indigo-300 shadow-lg">
+                        <h3 class="text-xl font-bold text-indigo-800 mb-4">${module.title}</h3>
+                        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+                            <button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-lg" onclick="showModuleList('${key}')">
+                                📋 Vokabelliste anzeigen
+                            </button>
+                            <button class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 rounded-lg" onclick="showModuleImage('${key}')">
+                                🖼️ Vokabelseite anzeigen
+                            </button>
+                        </div>
+                        <button class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-xl shadow-md transition-transform active:scale-95" onclick="addAllModuleVocabs('${key}')">
+                            ➕ Alle Vokabeln hinzufügen
+                        </button>
+                    </div>
+                 `;
+
+                 container.innerHTML += html;
              }
         }
         
